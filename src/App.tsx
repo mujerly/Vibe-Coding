@@ -8,9 +8,7 @@ import { getRelationshipStage } from './systems/girls/affectionLogic'
 import { ShopPage } from './systems/spending/ShopPage'
 import { useGameStore } from './store/gameStore'
 import type { AppTab, GirlState } from './store/gameTypes'
-import { uiStrings } from './data'
-
-const { demoChecklist, strategyHints } = uiStrings
+import { uiStrings, t } from './data'
 
 function StatsView({ girls }: { girls: Record<string, GirlState> }) {
   const player = useGameStore((state) => state.player)
@@ -18,26 +16,28 @@ function StatsView({ girls }: { girls: Record<string, GirlState> }) {
   const conqueredCount = Object.values(girls).filter((girl) => girl.affection >= 80).length
   const blockedCount = Object.values(girls).filter((girl) => girl.status === 'blocked').length
 
+  const s = uiStrings.stats
+
   return (
     <div className="scrollbar-hidden flex h-full flex-col overflow-y-auto px-4 pb-4 pt-5">
       <div className="rounded-[30px] bg-[linear-gradient(135deg,#fff7e6,#ffefd3)] px-5 py-5 shadow-soft">
-        <p className="text-xs uppercase tracking-[0.28em] text-wine/40">结算面板</p>
-        <h1 className="mt-2 font-display text-2xl text-ink">当前战绩</h1>
+        <p className="text-xs uppercase tracking-[0.28em] text-wine/40">{s.panelLabel}</p>
+        <h1 className="mt-2 font-display text-2xl text-ink">{s.panelTitle}</h1>
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-3xl bg-white/80 px-4 py-3">
-            <div className="text-wine/45">总分</div>
+            <div className="text-wine/45">{s.totalScore}</div>
             <div className="mt-2 text-2xl font-semibold text-wine">{score}</div>
           </div>
           <div className="rounded-3xl bg-white/80 px-4 py-3">
-            <div className="text-wine/45">已攻略</div>
+            <div className="text-wine/45">{s.conquered}</div>
             <div className="mt-2 text-2xl font-semibold text-ink">{conqueredCount}</div>
           </div>
           <div className="rounded-3xl bg-white/80 px-4 py-3">
-            <div className="text-wine/45">累计赚到</div>
+            <div className="text-wine/45">{s.totalEarned}</div>
             <div className="mt-2 text-xl font-semibold text-ink">¥ {player.totalEarned}</div>
           </div>
           <div className="rounded-3xl bg-white/80 px-4 py-3">
-            <div className="text-wine/45">累计花费</div>
+            <div className="text-wine/45">{s.totalSpent}</div>
             <div className="mt-2 text-xl font-semibold text-ink">¥ {player.totalSpent}</div>
           </div>
         </div>
@@ -45,9 +45,9 @@ function StatsView({ girls }: { girls: Record<string, GirlState> }) {
 
       <div className="mt-4 rounded-[28px] bg-white px-4 py-4 shadow-soft">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-ink">关系面板</h2>
+          <h2 className="text-base font-semibold text-ink">{s.relationPanel}</h2>
           <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-medium text-slate-500">
-            拉黑 {blockedCount}
+            {s.blocked} {blockedCount}
           </span>
         </div>
 
@@ -97,6 +97,9 @@ function App() {
   const [chatOpen, setChatOpen] = useState(false)
   const [settlementMessage, setSettlementMessage] = useState<string | null>(null)
 
+  const sa = uiStrings.app
+  const sb = uiStrings.sidebar
+
   const activeGirlsCount = useMemo(
     () => Object.values(girls).filter((girl) => girl.status !== 'blocked').length,
     [girls],
@@ -117,13 +120,13 @@ function App() {
       if (Date.now() >= currentJob.startTime + currentJob.duration * 1000) {
         const reward = finishWork()
         if (reward > 0) {
-          setSettlementMessage(`打工结算完成，到账 ¥${reward}`)
+          setSettlementMessage(t(sa.settlementMessage, { reward }))
         }
       }
     }, 1000)
 
     return () => window.clearInterval(timer)
-  }, [finishWork, player.currentJob])
+  }, [finishWork, player.currentJob, sa.settlementMessage])
 
   useEffect(() => {
     if (!settlementMessage) return undefined
@@ -168,50 +171,50 @@ function App() {
         <section className="w-full lg:max-w-[360px]">
           <div className="rounded-[34px] bg-white/75 p-6 shadow-soft backdrop-blur">
             <p className="text-xs uppercase tracking-[0.32em] text-wine/45">Vibe Coding Demo</p>
-            <h1 className="mt-3 font-display text-4xl leading-tight text-ink">《渣男模拟器》</h1>
+            <h1 className="mt-3 font-display text-4xl leading-tight text-ink">{sa.title}</h1>
             <p className="mt-4 text-sm leading-7 text-wine/70">
-              一个在手机壳里完成聊天、打工、送礼和多线关系经营的 AI 驱动 demo。
+              {sa.subtitle}
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-3xl bg-cream px-4 py-3">
-                <div className="text-wine/45">当前分数</div>
+                <div className="text-wine/45">{sb.currentScore}</div>
                 <div className="mt-1 text-xl font-semibold text-ink">{score}</div>
               </div>
               <div className="rounded-3xl bg-cream px-4 py-3">
-                <div className="text-wine/45">可用关系</div>
+                <div className="text-wine/45">{sb.activeRelations}</div>
                 <div className="mt-1 text-xl font-semibold text-ink">{activeGirlsCount}</div>
               </div>
               <div className="rounded-3xl bg-cream px-4 py-3">
-                <div className="text-wine/45">钱包</div>
+                <div className="text-wine/45">{sb.wallet}</div>
                 <div className="mt-1 text-xl font-semibold text-ink">¥ {player.money}</div>
               </div>
               <div className="rounded-3xl bg-cream px-4 py-3">
-                <div className="text-wine/45">背包</div>
+                <div className="text-wine/45">{sb.backpack}</div>
                 <div className="mt-1 text-xl font-semibold text-ink">{player.inventory.length}</div>
               </div>
             </div>
 
             <div className="mt-4 rounded-3xl bg-cream px-4 py-4 text-sm">
-              <div className="text-wine/45">AI 模式</div>
+              <div className="text-wine/45">{sb.aiMode}</div>
               <div className="mt-1 font-semibold text-ink">
-                {isSiliconflowEnabled ? `SiliconFlow · ${siliconflowConfig.model}` : '本地模拟回复'}
+                {isSiliconflowEnabled ? `SiliconFlow · ${siliconflowConfig.model}` : sb.aiFallback}
               </div>
             </div>
 
             <div className="mt-4 rounded-3xl bg-cream px-4 py-4 text-sm">
-              <div className="font-semibold text-ink">演示顺序</div>
+              <div className="font-semibold text-ink">{sb.demoOrderTitle}</div>
               <div className="mt-3 space-y-2 text-wine/70">
-                {demoChecklist.map((item) => (
+                {sb.demoChecklist.map((item) => (
                   <p key={item}>{item}</p>
                 ))}
               </div>
             </div>
 
             <div className="mt-4 rounded-3xl bg-cream px-4 py-4 text-sm">
-              <div className="font-semibold text-ink">攻略提示</div>
+              <div className="font-semibold text-ink">{sb.strategyTitle}</div>
               <div className="mt-3 space-y-2 text-wine/70">
-                {strategyHints.map((item) => (
+                {sb.strategyHints.map((item) => (
                   <p key={item}>{item}</p>
                 ))}
               </div>
@@ -228,13 +231,13 @@ function App() {
               }}
               className="mt-4 w-full rounded-3xl bg-wine px-4 py-3 text-sm font-medium text-white"
             >
-              重开 Demo
+              {sa.resetButton}
             </button>
           </div>
 
           {gameOver ? (
             <div className="mt-4 rounded-[30px] bg-[#411d2b] px-5 py-5 text-white shadow-soft">
-              <div className="text-sm font-semibold">游戏结束</div>
+              <div className="text-sm font-semibold">{sa.gameOver}</div>
               <div className="mt-2 text-sm text-white/75">{gameOverReason}</div>
             </div>
           ) : null}

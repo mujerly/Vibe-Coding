@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { jobs } from './jobs'
 import { useGameStore } from '../../store/gameStore'
+import { uiStrings } from '../../data'
 
 export function EarningPage() {
   const currentJob = useGameStore((state) => state.player.currentJob)
@@ -8,6 +9,8 @@ export function EarningPage() {
   const startWork = useGameStore((state) => state.startWork)
   const [now, setNow] = useState(0)
   const [feedback, setFeedback] = useState<string | null>(null)
+
+  const s = uiStrings.earning
 
   useEffect(() => {
     if (!feedback) return undefined
@@ -35,10 +38,10 @@ export function EarningPage() {
   return (
     <div className="scrollbar-hidden flex h-full flex-col overflow-y-auto px-4 pb-4 pt-5">
       <div className="rounded-[30px] bg-[linear-gradient(135deg,#29161f,#5a2c45)] px-5 py-5 text-white shadow-phone">
-        <p className="text-xs uppercase tracking-[0.28em] text-white/55">赚钱系统</p>
-        <h1 className="mt-2 font-display text-2xl">别聊了，先去搞钱</h1>
+        <p className="text-xs uppercase tracking-[0.28em] text-white/55">{s.topLabel}</p>
+        <h1 className="mt-2 font-display text-2xl">{s.title}</h1>
         <p className="mt-2 text-sm leading-6 text-white/75">
-          打工期间不能回消息，时间越久，妹子掉好感越快。
+          {s.subtitle}
         </p>
       </div>
 
@@ -53,10 +56,10 @@ export function EarningPage() {
               <div className="text-sm font-semibold text-ink">
                 {currentJobMeta.emoji} {currentJobMeta.name}
               </div>
-              <div className="mt-1 text-xs text-wine/55">预计收入 ¥{currentJob.reward}</div>
+              <div className="mt-1 text-xs text-wine/55">{s.estimatedIncome} ¥{currentJob.reward}</div>
             </div>
             <div className="rounded-full bg-amber-100 px-3 py-2 text-xs font-medium text-amber-700">
-              剩余 {remainingSeconds}s
+              {s.remaining} {remainingSeconds}{s.timeUnit}
             </div>
           </div>
           <div className="mt-4 h-3 overflow-hidden rounded-full bg-rose-100">
@@ -65,11 +68,11 @@ export function EarningPage() {
               style={{ width: `${progress * 100}%` }}
             />
           </div>
-          <p className="mt-3 text-sm text-wine/65">这段时间不能聊天，注意别让关系一起掉下去。</p>
+          <p className="mt-3 text-sm text-wine/65">{s.workingWarning}</p>
         </div>
       ) : (
         <div className="mt-4 rounded-[28px] bg-white px-4 py-4 text-sm text-wine/65 shadow-soft">
-          你现在是空闲状态。建议先赚点基础资金，再去买礼物补关键关系。
+          {s.idleHint}
         </div>
       )}
 
@@ -80,7 +83,7 @@ export function EarningPage() {
             type="button"
             onClick={() => {
               const result = startWork(job.id)
-              setFeedback(result.ok ? `${job.name} 开始了，期间不能聊天。` : result.error ?? '开工失败')
+              setFeedback(result.ok ? s.jobStarted.replace('{name}', job.name) : result.error ?? s.jobFailed)
             }}
             disabled={timeStatus === 'working'}
             className="w-full rounded-[28px] bg-white px-4 py-4 text-left shadow-soft transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
@@ -99,7 +102,7 @@ export function EarningPage() {
                 <div className="font-semibold text-wine">
                   {job.rewardRange ? `¥${job.rewardRange[0]}-${job.rewardRange[1]}` : `¥${job.reward}`}
                 </div>
-                <div className="mt-1 text-xs text-wine/50">{job.duration} 秒</div>
+                <div className="mt-1 text-xs text-wine/50">{job.duration} {s.timeUnit}</div>
               </div>
             </div>
           </button>

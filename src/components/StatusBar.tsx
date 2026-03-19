@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { isSiliconflowEnabled } from '../config/api'
+import { uiStrings } from '../data'
 
 interface StatusBarProps {
   money: number
@@ -24,12 +25,14 @@ export function StatusBar({ money, timeStatus }: StatusBarProps) {
     return () => window.clearInterval(timer)
   }, [])
 
+  const s = uiStrings.statusBar
+
   return (
     <div className="flex items-center justify-between border-b border-white/70 bg-white/65 px-5 pb-3 pt-4 text-[11px] font-medium text-ink backdrop-blur">
       <div className="flex items-center gap-2">
         <span className="font-semibold tracking-[0.24em]">{clock}</span>
         <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] text-wine/80 shadow-soft">
-          {isSiliconflowEnabled ? 'AI 云端' : 'AI 保底'}
+          {isSiliconflowEnabled ? s.aiCloud : s.aiFallback}
         </span>
       </div>
       <div className="flex items-center gap-2 text-[10px]">
@@ -41,7 +44,7 @@ export function StatusBar({ money, timeStatus }: StatusBarProps) {
               : 'bg-emerald-100 text-emerald-700'
           }`}
         >
-          {timeStatus === 'working' ? '打工中' : '空闲'}
+          {timeStatus === 'working' ? s.working : s.idle}
         </span>
       </div>
     </div>

@@ -12,7 +12,7 @@ import {
   resolveGirlStatus,
 } from '../systems/girls/affectionLogic'
 import { generateChatReply } from '../systems/chat/chatEngine'
-import { balance } from '../data'
+import { balance, uiStrings, t } from '../data'
 
 interface GameActions {
   sendMessage: (girlId: string, text: string) => Promise<ActionResult>
@@ -57,7 +57,7 @@ const appendBlockNotice = (
     return history
   }
 
-  return [...history, createMessage('system', `${girlName} 已经把你拉黑了。`)]
+  return [...history, createMessage('system', t(uiStrings.system.girlBlockedNotice, { name: girlName }))]
 }
 
 const computeDerivedState = (state: Pick<GameState, 'player' | 'girls'>) => {
@@ -135,8 +135,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get()
     const gift = state.economy.shopItems.find((item) => item.id === giftId)
 
-    if (!gift) return { ok: false, error: '礼物不存在。' }
-    if (state.player.money < gift.price) return { ok: false, error: '钱不够，先去打工吧。' }
+    if (!gift) return { ok: false, error: uiStrings.errors.giftNotFound }
+    if (state.player.money < gift.price) return { ok: false, error: uiStrings.errors.noMoney }
 
     set((current) => {
       const nextPlayer = {
@@ -195,11 +195,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get()
 
     if (state.player.timeStatus === 'working') {
-      return { ok: false, error: '你已经在打工了。' }
+      return { ok: false, error: uiStrings.errors.alreadyWorking }
     }
 
     const job = jobs.find((item) => item.id === jobType)
-    if (!job) return { ok: false, error: '工作不存在。' }
+    if (!job) return { ok: false, error: uiStrings.errors.jobNotFound }
 
     const reward =
       job.rewardRange != null
@@ -240,7 +240,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const penalty = getDelayedReplyPenalty(girlId, currentJob.duration, girl.affection)
         const nextAffection = clampAffection(girl.affection - penalty)
         const complaintMessage = createMessage('girl', getWorkComplaintMessage(girlId))
-        const mood = penalty >= 3 ? '失望' : '有点委屈'
+        const mood = penalty >= 3 ? uiStrings.system.workPenaltyMoodBad : uiStrings.system.workPenaltyMoodMild
         const nextStatus = resolveGirlStatus(nextAffection, mood)
         const nextHistory = appendBlockNotice(
           [...girl.chatHistory, complaintMessage],
@@ -333,14 +333,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   sendMessage: async (girlId, text) => {
     const content = text.trim()
-    if (!content) return { ok: false, error: '消息不能为空。' }
-    if (get().isPlayerBusy()) return { ok: false, error: '你正在打工，暂时无法回复消息。' }
+    if (!content) return { ok: false, error: uiStrings.errors.emptyMessage }
+    if (get().isPlayerBusy()) return { ok: false, error: uiStrings.errors.busyCantReply }
 
     const currentState = get()
     const girl = currentState.girls[girlId]
 
-    if (!girl) return { ok: false, error: '聊天对象不存在。' }
-    if (girl.status === 'blocked') return { ok: false, error: `${girl.profile.name} 已经把你拉黑了。` }
+    if (!girl) return { ok: false, error: uiStrings.errors.girlNotFound }
+    if (girl.status === 'blocked') return { ok: false, error: t(uiStrings.errors.girlBlocked, { name: girl.profile.name }) }
 
     const playerMessage = createMessage('player', content)
     const optimisticGirl = {
@@ -407,14 +407,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   sendGiftInChat: async (girlId, giftId) => {
-    if (get().isPlayerBusy()) return { ok: false, error: '你正在打工，暂时无法送礼物。' }
+    if (get().isPlayerBusy()) return { ok: false, error: uiStrings.errors.busyCantGift }
 
     const girl = get().girls[girlId]
-    if (!girl) return { ok: false, error: '聊天对象不存在。' }
-    if (girl.status === 'blocked') return { ok: false, error: `${girl.profile.name} 已经把你拉黑了。` }
+    if (!girl) return { ok: false, error: uiStrings.errors.girlNotFound }
+    if (girl.status === 'blocked') return { ok: false, error: t(uiStrings.errors.girlBlocked, { name: girl.profile.name }) }
 
     const gift = get().useGift(giftId)
-    if (!gift) return { ok: false, error: '背包里没有这个礼物。' }
+    if (!gift) return { ok: false, error: uiStrings.errors.noGiftInBag }
 
     const giftMessage = createMessage(
       'player',

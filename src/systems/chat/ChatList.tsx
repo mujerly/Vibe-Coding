@@ -1,6 +1,7 @@
 import { getRelationshipStage } from '../girls/affectionLogic'
 import type { GirlState } from '../../store/gameTypes'
 import { Avatar } from '../../components/Avatar'
+import { uiStrings } from '../../data'
 
 interface ChatListProps {
   girls: Record<string, GirlState>
@@ -21,14 +22,8 @@ const affectionTone = (affection: number) => {
   return 'text-slate-400'
 }
 
-const statusLabel: Record<GirlState['status'], string> = {
-  normal: '状态正常',
-  suspicious: '开始怀疑',
-  angry: '正在生气',
-  blocked: '已拉黑',
-}
-
 export function ChatList({ girls, onOpen }: ChatListProps) {
+  const s = uiStrings.chatList
   const sortedGirls = Object.values(girls).sort((a, b) => {
     const aLast = a.chatHistory[a.chatHistory.length - 1]?.timestamp ?? 0
     const bLast = b.chatHistory[b.chatHistory.length - 1]?.timestamp ?? 0
@@ -38,14 +33,14 @@ export function ChatList({ girls, onOpen }: ChatListProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-white/60 px-5 pb-4 pt-5">
-        <p className="text-xs uppercase tracking-[0.3em] text-wine/45">微信分身</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-wine/45">{s.topLabel}</p>
         <div className="mt-2 flex items-end justify-between">
           <div>
-            <h1 className="font-display text-2xl text-ink">渣男通讯录</h1>
-            <p className="mt-1 text-sm text-wine/60">点开一位开始聊天，优先处理未读多的对话。</p>
+            <h1 className="font-display text-2xl text-ink">{s.title}</h1>
+            <p className="mt-1 text-sm text-wine/60">{s.subtitle}</p>
           </div>
           <div className="rounded-2xl bg-white/80 px-3 py-2 text-right shadow-soft">
-            <div className="text-[10px] uppercase tracking-[0.24em] text-wine/40">并行会话</div>
+            <div className="text-[10px] uppercase tracking-[0.24em] text-wine/40">{s.sessionCount}</div>
             <div className="text-lg font-semibold text-ink">{sortedGirls.length}</div>
           </div>
         </div>
@@ -79,7 +74,7 @@ export function ChatList({ girls, onOpen }: ChatListProps) {
                       <span className={`text-sm ${affectionTone(girl.affection)}`}>♥ {girl.affection}</span>
                     </div>
                     <p className="mt-1 text-xs text-wine/55">
-                      {getRelationshipStage(girl.affection)} · {statusLabel[girl.status]}
+                      {getRelationshipStage(girl.affection)} · {s.statusLabels[girl.status] ?? girl.status}
                     </p>
                   </div>
                   <span className="shrink-0 text-[11px] text-wine/45">
@@ -88,7 +83,7 @@ export function ChatList({ girls, onOpen }: ChatListProps) {
                 </div>
 
                 <p className="mt-3 line-clamp-2 text-sm text-wine/70">
-                  {lastMessage?.content || '还没有聊天记录'}
+                  {lastMessage?.content || s.noMessages}
                 </p>
               </div>
             </button>

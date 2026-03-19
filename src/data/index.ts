@@ -29,3 +29,7 @@ export const balance: BalanceConfig = balanceData as BalanceConfig
 export const uiStrings: UiStringsConfig = uiStringsData as UiStringsConfig
 
 export const metaPrompt: string = metaPromptText
+
+/** Simple template string helper: t("到账 ¥{reward}", { reward: 100 }) → "到账 ¥100" */
+export const t = (template: string, vars: Record<string, string | number> = {}): string =>
+  template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`))

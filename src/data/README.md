@@ -288,12 +288,176 @@ src/data/
 
 ---
 
-## ui-strings.json — 界面文案
+## ui-strings.json — 全部界面文字
 
-| 字段 | 说明 |
-|------|------|
-| `demoChecklist` | 左侧面板"演示顺序"区域的文案列表 |
-| `strategyHints` | 左侧面板"攻略提示"区域的文案列表 |
+游戏中**所有用户可见的文字**都在这个文件里，按页面/模块分组。
+修改这个文件即可更改任何界面文案，不需要改代码。
+
+### 模板变量
+
+部分文案包含 `{变量名}` 占位符，运行时会自动替换：
+
+```json
+"settlementMessage": "打工结算完成，到账 ¥{reward}"
+"girlBlocked": "{name} 已经把你拉黑了。"
+"jobStarted": "{name} 开始了，期间不能聊天。"
+```
+
+### 分组说明
+
+| 分组 | 说明 | 示例字段 |
+|------|------|----------|
+| `app` | 游戏标题和全局文案 | `title`（游戏名）、`resetButton`（重开按钮）、`gameOver` |
+| `sidebar` | 左侧信息面板 | `currentScore`、`wallet`、`demoChecklist`、`strategyHints` |
+| `stats` | 战绩页 | `panelTitle`、`totalScore`、`conquered`、`totalEarned` |
+| `nav` | 底部导航栏 | `chat`（聊天）、`work`（打工）、`shop`（商店）、`stats`（战绩） |
+| `statusBar` | 顶部状态栏 | `aiCloud`、`aiFallback`、`working`、`idle` |
+| `chatList` | 通讯录页面 | `title`、`statusLabels`（状态正常/开始怀疑/正在生气/已拉黑） |
+| `chatRoom` | 聊天室 | `send`、`typing`、`busyWarning`、`blockedWarning`、占位文字 |
+| `giftPicker` | 礼物选择弹窗 | `title`、`empty`（背包空提示）、`stock`（库存） |
+| `earning` | 打工页面 | `title`、`subtitle`、`workingWarning`、`idleHint`、`jobStarted` |
+| `shop` | 商店页面 | `title`、`subtitle`、`buyButton`、`insufficientFunds` |
+| `errors` | 所有错误提示 | `noMoney`、`girlBlocked`、`emptyMessage`、`busyCantReply` |
+| `system` | 系统消息 | `girlBlockedNotice`（拉黑通知）、`workPenaltyMoodBad`/`Mild`（情绪词） |
+
+### 完整字段清单
+
+<details>
+<summary>点击展开完整字段列表</summary>
+
+#### app — 全局
+| 字段 | 当前值 |
+|------|--------|
+| `title` | 《渣男模拟器》 |
+| `subtitle` | 一个在手机壳里完成聊天、打工、送礼和多线关系经营的 AI 驱动 demo。 |
+| `resetButton` | 重开 Demo |
+| `gameOver` | 游戏结束 |
+| `settlementMessage` | 打工结算完成，到账 ¥{reward} |
+
+#### sidebar — 左侧面板
+| 字段 | 当前值 |
+|------|--------|
+| `currentScore` | 当前分数 |
+| `activeRelations` | 可用关系 |
+| `wallet` | 钱包 |
+| `backpack` | 背包 |
+| `aiMode` | AI 模式 |
+| `aiFallback` | 本地模拟回复 |
+| `demoOrderTitle` | 演示顺序 |
+| `strategyTitle` | 攻略提示 |
+| `demoChecklist` | （数组，演示步骤列表） |
+| `strategyHints` | （数组，攻略提示列表） |
+
+#### nav — 底部导航
+| 字段 | 当前值 |
+|------|--------|
+| `chat` | 聊天 |
+| `work` | 打工 |
+| `shop` | 商店 |
+| `stats` | 战绩 |
+
+#### statusBar — 顶部状态栏
+| 字段 | 当前值 |
+|------|--------|
+| `aiCloud` | AI 云端 |
+| `aiFallback` | AI 保底 |
+| `working` | 打工中 |
+| `idle` | 空闲 |
+
+#### chatList — 通讯录
+| 字段 | 当前值 |
+|------|--------|
+| `topLabel` | 微信分身 |
+| `title` | 渣男通讯录 |
+| `subtitle` | 点开一位开始聊天，优先处理未读多的对话。 |
+| `sessionCount` | 并行会话 |
+| `noMessages` | 还没有聊天记录 |
+| `statusLabels.normal` | 状态正常 |
+| `statusLabels.suspicious` | 开始怀疑 |
+| `statusLabels.angry` | 正在生气 |
+| `statusLabels.blocked` | 已拉黑 |
+
+#### chatRoom — 聊天室
+| 字段 | 当前值 |
+|------|--------|
+| `back` | 返回 |
+| `send` | 发送 |
+| `giftButton` | 礼物 |
+| `typing` | 对方正在输入... |
+| `replySourceLabel` | 当前回复来源： |
+| `replySourceAi` | 云端 AI |
+| `replySourceFallback` | 本地保底 |
+| `fallbackReasonPrefix` | 回退原因： |
+| `unknownReason` | 未知原因 |
+| `fallbackNotice` | 这条回复来自本地保底。原因：{reason} |
+| `giftSentAi` | 礼物已送出，当前回复来自云端 AI。 |
+| `giftSentFallback` | 礼物已送出，但这条回复是本地保底。原因：{reason} |
+| `busyWarning` | 你正在打工，这段时间不能回消息。 |
+| `blockedWarning` | 她已经把你拉黑了，这段关系结束了。 |
+| `placeholderBlocked` | 这段关系已经结束了 |
+| `placeholderBusy` | 打工中，无法输入... |
+| `placeholderDefault` | 发一句试试看 |
+
+#### giftPicker — 礼物弹窗
+| 字段 | 当前值 |
+|------|--------|
+| `title` | 背包礼物 |
+| `subtitle` | 选一个礼物发出去，看看她的真实反应。 |
+| `close` | 关闭 |
+| `empty` | 背包空空的，先去商店买点礼物吧。 |
+| `stock` | 库存 |
+
+#### earning — 打工页
+| 字段 | 当前值 |
+|------|--------|
+| `topLabel` | 赚钱系统 |
+| `title` | 别聊了，先去搞钱 |
+| `subtitle` | 打工期间不能回消息，时间越久，妹子掉好感越快。 |
+| `estimatedIncome` | 预计收入 |
+| `remaining` | 剩余 |
+| `timeUnit` | 秒 |
+| `workingWarning` | 这段时间不能聊天，注意别让关系一起掉下去。 |
+| `idleHint` | 你现在是空闲状态。建议先赚点基础资金，再去买礼物补关键关系。 |
+| `jobStarted` | {name} 开始了，期间不能聊天。 |
+| `jobFailed` | 开工失败 |
+
+#### shop — 商店页
+| 字段 | 当前值 |
+|------|--------|
+| `topLabel` | 花钱系统 |
+| `title` | 恋爱供给站 |
+| `subtitle` | 买对礼物，比盲目花钱更重要。 |
+| `balance` | 余额 |
+| `backpackCount` | 背包 |
+| `purchased` | 已购买 |
+| `purchaseFailed` | 购买失败 |
+| `buyButton` | 购买 |
+| `insufficientFunds` | 余额不足 |
+
+#### errors — 错误提示
+| 字段 | 当前值 |
+|------|--------|
+| `girlNotFound` | 聊天对象不存在。 |
+| `giftNotFound` | 礼物不存在。 |
+| `jobNotFound` | 工作不存在。 |
+| `noMoney` | 钱不够，先去打工吧。 |
+| `alreadyWorking` | 你已经在打工了。 |
+| `emptyMessage` | 消息不能为空。 |
+| `busyCantReply` | 你正在打工，暂时无法回复消息。 |
+| `busyCantGift` | 你正在打工，暂时无法送礼物。 |
+| `girlBlocked` | {name} 已经把你拉黑了。 |
+| `noGiftInBag` | 背包里没有这个礼物。 |
+| `sendFailed` | 发送失败 |
+| `giftFailed` | 送礼失败 |
+
+#### system — 系统消息
+| 字段 | 当前值 |
+|------|--------|
+| `girlBlockedNotice` | {name} 已经把你拉黑了。 |
+| `workPenaltyMoodBad` | 失望 |
+| `workPenaltyMoodMild` | 有点委屈 |
+
+</details>
 
 ---
 

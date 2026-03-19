@@ -1,15 +1,16 @@
 import type { AppTab } from '../store/gameTypes'
+import { uiStrings } from '../data'
 
 interface NavBarProps {
   activeTab: AppTab
   onTabChange: (tab: AppTab) => void
 }
 
-const navItems: Array<{ id: AppTab; label: string; icon: string }> = [
-  { id: 'chat', label: '聊天', icon: '💬' },
-  { id: 'work', label: '打工', icon: '💻' },
-  { id: 'shop', label: '商店', icon: '🎁' },
-  { id: 'stats', label: '战绩', icon: '📊' },
+const navItems: Array<{ id: AppTab; labelKey: keyof typeof uiStrings.nav; icon: string }> = [
+  { id: 'chat', labelKey: 'chat', icon: '💬' },
+  { id: 'work', labelKey: 'work', icon: '💻' },
+  { id: 'shop', labelKey: 'shop', icon: '🎁' },
+  { id: 'stats', labelKey: 'stats', icon: '📊' },
 ]
 
 export function NavBar({ activeTab, onTabChange }: NavBarProps) {
@@ -30,7 +31,7 @@ export function NavBar({ activeTab, onTabChange }: NavBarProps) {
             }`}
           >
             <div className="text-base">{item.icon}</div>
-            <div className="mt-1 text-[11px] font-medium">{item.label}</div>
+            <div className="mt-1 text-[11px] font-medium">{uiStrings.nav[item.labelKey]}</div>
           </button>
         )
       })}

@@ -1,4 +1,5 @@
 import { useGameStore } from '../../store/gameStore'
+import { uiStrings } from '../../data'
 
 interface GiftPickerProps {
   open: boolean
@@ -8,6 +9,7 @@ interface GiftPickerProps {
 
 export function GiftPicker({ open, onClose, onSelect }: GiftPickerProps) {
   const inventory = useGameStore((state) => state.player.inventory)
+  const s = uiStrings.giftPicker
 
   if (!open) return null
 
@@ -34,21 +36,21 @@ export function GiftPicker({ open, onClose, onSelect }: GiftPickerProps) {
       <div className="w-full rounded-[28px] bg-white p-4 shadow-phone">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-ink">背包礼物</h3>
-            <p className="text-sm text-wine/55">选一个礼物发出去，看看她的真实反应。</p>
+            <h3 className="text-lg font-semibold text-ink">{s.title}</h3>
+            <p className="text-sm text-wine/55">{s.subtitle}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-full bg-rose-50 px-3 py-2 text-xs font-medium text-rose-600"
           >
-            关闭
+            {s.close}
           </button>
         </div>
 
         {groupedInventory.length === 0 ? (
           <div className="rounded-3xl bg-cream px-4 py-5 text-center text-sm text-wine/60">
-            背包空空的，先去商店买点礼物吧。
+            {s.empty}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
@@ -61,7 +63,7 @@ export function GiftPicker({ open, onClose, onSelect }: GiftPickerProps) {
               >
                 <div className="text-2xl">{gift.emoji}</div>
                 <div className="mt-2 text-sm font-semibold text-ink">{gift.name}</div>
-                <div className="mt-1 text-xs text-wine/55">库存 {gift.count}</div>
+                <div className="mt-1 text-xs text-wine/55">{s.stock} {gift.count}</div>
               </button>
             ))}
           </div>

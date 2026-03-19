@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getRelationshipStage } from '../girls/affectionLogic'
 import { useGameStore } from '../../store/gameStore'
 import { GiftPicker } from './GiftPicker'
-import { girlConfigs } from '../../data'
+import { girlConfigs, uiStrings } from '../../data'
 import { Avatar } from '../../components/Avatar'
 
 interface ChatRoomProps {
@@ -21,6 +21,8 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
   const [feedback, setFeedback] = useState<string | null>(null)
   const endRef = useRef<HTMLDivElement | null>(null)
 
+  const s = uiStrings.chatRoom
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [girl?.chatHistory, sending])
@@ -34,7 +36,7 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
 
   if (!girl) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-wine/60">聊天对象不存在。</div>
+      <div className="flex h-full items-center justify-center text-sm text-wine/60">{uiStrings.errors.girlNotFound}</div>
     )
   }
 
@@ -42,9 +44,9 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
   const blocked = girl.status === 'blocked'
   const quickPrompts = girlConfigs[girlId]?.quickPrompts ?? []
   const replySourceLabel =
-    girl.lastReplySource == null ? null : girl.lastReplySource === 'ai' ? '云端 AI' : '本地保底'
+    girl.lastReplySource == null ? null : girl.lastReplySource === 'ai' ? s.replySourceAi : s.replySourceFallback
   const fallbackReason =
-    girl.lastReplySource === 'fallback' ? girl.lastReplyDebugReason ?? '未知原因' : null
+    girl.lastReplySource === 'fallback' ? girl.lastReplyDebugReason ?? s.unknownReason : null
 
   const handleSend = async () => {
     if (sending || !draft.trim()) return
@@ -54,14 +56,14 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
     setSending(false)
 
     if (!result.ok) {
-      setFeedback(result.error ?? '发送失败')
+      setFeedback(result.error ?? uiStrings.errors.sendFailed)
       return
     }
 
     setDraft('')
     if (useGameStore.getState().girls[girlId]?.lastReplySource === 'fallback') {
-      const reason = useGameStore.getState().girls[girlId]?.lastReplyDebugReason ?? '未知原因'
-      setFeedback(`这条回复来自本地保底。原因：${reason}`)
+      const reason = useGameStore.getState().girls[girlId]?.lastReplyDebugReason ?? s.unknownReason
+      setFeedback(s.fallbackNotice.replace('{reason}', reason))
     }
   }
 
@@ -72,17 +74,17 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
     setSending(false)
 
     if (!result.ok) {
-      setFeedback(result.error ?? '送礼失败')
+      setFeedback(result.error ?? uiStrings.errors.giftFailed)
       return
     }
 
-    setFeedback(
-      useGameStore.getState().girls[girlId]?.lastReplySource === 'fallback'
-        ? `礼物已送出，但这条回复是本地保底。原因：${
-            useGameStore.getState().girls[girlId]?.lastReplyDebugReason ?? '未知原因'
-          }`
-        : '礼物已送出，当前回复来自云端 AI。',
-    )
+    const state = useGameStore.getState()
+    if (state.girls[girlId]?.lastReplySource === 'fallback') {
+      const reason = state.girls[girlId]?.lastReplyDebugReason ?? s.unknownReason
+      setFeedback(s.giftSentFallback.replace('{reason}', reason))
+    } else {
+      setFeedback(s.giftSentAi)
+    }
   }
 
   return (
@@ -94,7 +96,7 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
             onClick={onBack}
             className="rounded-full bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600"
           >
-            返回
+            {s.back}
           </button>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -130,11 +132,11 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
         {replySourceLabel ? (
           <div className="mt-3 space-y-2">
             <div className="inline-flex rounded-full bg-white/80 px-3 py-1 text-[11px] font-medium text-wine/75">
-              当前回复来源：{replySourceLabel}
+              {s.replySourceLabel}{replySourceLabel}
             </div>
             {fallbackReason ? (
               <div className="rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                回退原因：{fallbackReason}
+                {s.fallbackReasonPrefix}{fallbackReason}
               </div>
             ) : null}
           </div>
@@ -195,7 +197,7 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
               <Avatar avatar={girl.profile.avatar} name={girl.profile.name} size="sm" />
             </div>
             <div className="rounded-[24px] rounded-bl-md bg-white px-4 py-3 text-sm text-wine/55 shadow-soft">
-              对方正在输入...
+              {s.typing}
             </div>
           </div>
         ) : null}
@@ -208,12 +210,12 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
         ) : null}
         {isBusy ? (
           <div className="mb-3 rounded-2xl bg-amber-50 px-3 py-2 text-sm text-amber-700">
-            你正在打工，这段时间不能回消息。
+            {s.busyWarning}
           </div>
         ) : null}
         {blocked ? (
           <div className="mb-3 rounded-2xl bg-slate-100 px-3 py-2 text-sm text-slate-500">
-            她已经把你拉黑了，这段关系结束了。
+            {s.blockedWarning}
           </div>
         ) : null}
 
@@ -224,7 +226,7 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
             disabled={blocked || isBusy || sending}
             className="rounded-2xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
           >
-            礼物
+            {s.giftButton}
           </button>
           <input
             value={draft}
@@ -237,7 +239,7 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
             }}
             disabled={blocked || isBusy || sending}
             placeholder={
-              blocked ? '这段关系已经结束了' : isBusy ? '打工中，无法输入...' : '发一句试试看'
+              blocked ? s.placeholderBlocked : isBusy ? s.placeholderBusy : s.placeholderDefault
             }
             className="min-w-0 flex-1 rounded-2xl border border-rose-100 bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-wine/35 focus:border-rose-300"
           />
@@ -247,7 +249,7 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
             disabled={!draft.trim() || blocked || isBusy || sending}
             className="rounded-2xl bg-wine px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-wine/30"
           >
-            发送
+            {s.send}
           </button>
         </div>
       </div>

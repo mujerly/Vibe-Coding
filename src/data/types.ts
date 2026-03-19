@@ -131,8 +131,123 @@ export interface BalanceConfig {
   gameOverMessage: string
 }
 
-/** UI strings configuration */
+/** UI strings configuration — all user-facing text in the app */
 export interface UiStringsConfig {
-  demoChecklist: string[]
-  strategyHints: string[]
+  app: {
+    title: string
+    subtitle: string
+    resetButton: string
+    gameOver: string
+    settlementMessage: string
+  }
+  sidebar: {
+    currentScore: string
+    activeRelations: string
+    wallet: string
+    backpack: string
+    aiMode: string
+    aiFallback: string
+    demoOrderTitle: string
+    strategyTitle: string
+    demoChecklist: string[]
+    strategyHints: string[]
+  }
+  stats: {
+    panelLabel: string
+    panelTitle: string
+    totalScore: string
+    conquered: string
+    totalEarned: string
+    totalSpent: string
+    relationPanel: string
+    blocked: string
+  }
+  nav: {
+    chat: string
+    work: string
+    shop: string
+    stats: string
+  }
+  statusBar: {
+    aiCloud: string
+    aiFallback: string
+    working: string
+    idle: string
+  }
+  chatList: {
+    topLabel: string
+    title: string
+    subtitle: string
+    sessionCount: string
+    noMessages: string
+    statusLabels: Record<string, string>
+  }
+  chatRoom: {
+    back: string
+    send: string
+    giftButton: string
+    typing: string
+    replySourceLabel: string
+    replySourceAi: string
+    replySourceFallback: string
+    fallbackReasonPrefix: string
+    unknownReason: string
+    fallbackNotice: string
+    giftSentAi: string
+    giftSentFallback: string
+    busyWarning: string
+    blockedWarning: string
+    placeholderBlocked: string
+    placeholderBusy: string
+    placeholderDefault: string
+  }
+  giftPicker: {
+    title: string
+    subtitle: string
+    close: string
+    empty: string
+    stock: string
+  }
+  earning: {
+    topLabel: string
+    title: string
+    subtitle: string
+    estimatedIncome: string
+    remaining: string
+    timeUnit: string
+    workingWarning: string
+    idleHint: string
+    jobStarted: string
+    jobFailed: string
+  }
+  shop: {
+    topLabel: string
+    title: string
+    subtitle: string
+    balance: string
+    backpackCount: string
+    purchased: string
+    purchaseFailed: string
+    buyButton: string
+    insufficientFunds: string
+  }
+  errors: {
+    girlNotFound: string
+    giftNotFound: string
+    jobNotFound: string
+    noMoney: string
+    alreadyWorking: string
+    emptyMessage: string
+    busyCantReply: string
+    busyCantGift: string
+    girlBlocked: string
+    noGiftInBag: string
+    sendFailed: string
+    giftFailed: string
+  }
+  system: {
+    girlBlockedNotice: string
+    workPenaltyMoodBad: string
+    workPenaltyMoodMild: string
+  }
 }
