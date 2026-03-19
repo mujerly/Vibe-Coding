@@ -1,0 +1,39 @@
+{
+  "initialMoney": 120,
+  "initialAffection": 30,
+  "initialMood": "观望",
+  "affectionTiers": [
+    { "min": 0, "max": 19, "label": "冷淡" },
+    { "min": 20, "max": 39, "label": "礼貌" },
+    { "min": 40, "max": 59, "label": "有兴趣" },
+    { "min": 60, "max": 79, "label": "暧昧" },
+    { "min": 80, "max": 100, "label": "热恋" }
+  ],
+  "statusThresholds": {
+    "blocked": 0,
+    "angry": 15,
+    "suspicious": 30,
+    "angryMoodPatterns": ["生气", "失望", "厌烦", "反感", "冷掉"],
+    "suspiciousMoodPatterns": ["怀疑", "试探", "观察"]
+  },
+  "giftPreference": {
+    "likedDelta": 6,
+    "likedFreeDelta": 4,
+    "dislikedDelta": -4,
+    "defaultDelta": 1
+  },
+  "delayPenalty": {
+    "secondsPerTick": 45,
+    "highAffectionThreshold": 60,
+    "highAffectionExtra": 1
+  },
+  "scoring": {
+    "conqueredThreshold": 80,
+    "conqueredBonus": 300,
+    "affectionMultiplier": 2,
+    "moneyDivisor": 10,
+    "spentDivisor": 5,
+    "blockedPenalty": 120
+  },
+  "gameOverMessage": "所有妹子都把你拉黑了。"
+}

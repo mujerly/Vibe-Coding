@@ -8,18 +8,9 @@ import { getRelationshipStage } from './systems/girls/affectionLogic'
 import { ShopPage } from './systems/spending/ShopPage'
 import { useGameStore } from './store/gameStore'
 import type { AppTab, GirlState } from './store/gameTypes'
+import { uiStrings } from './data'
 
-const demoChecklist = [
-  '先和小甜聊几句，快速拉起好感。',
-  '切到 Jessica，展示她和小甜完全不同的回复风格。',
-  '去打工赚一笔钱，再买礼物回来补关系。',
-]
-
-const strategyHints = [
-  '小甜：吃甜话术和奶茶、玫瑰。',
-  'Jessica：看实际投入，礼物比空话有效。',
-  '林悠悠：真诚聊内容，不要油腻称呼。',
-]
+const { demoChecklist, strategyHints } = uiStrings
 
 function StatsView({ girls }: { girls: Record<string, GirlState> }) {
   const player = useGameStore((state) => state.player)

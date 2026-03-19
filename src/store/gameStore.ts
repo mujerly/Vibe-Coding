@@ -12,6 +12,7 @@ import {
   resolveGirlStatus,
 } from '../systems/girls/affectionLogic'
 import { generateChatReply } from '../systems/chat/chatEngine'
+import { balance } from '../data'
 
 interface GameActions {
   sendMessage: (girlId: string, text: string) => Promise<ActionResult>
@@ -60,31 +61,32 @@ const appendBlockNotice = (
 }
 
 const computeDerivedState = (state: Pick<GameState, 'player' | 'girls'>) => {
+  const { scoring, gameOverMessage } = balance
   const girls = Object.values(state.girls)
-  const conqueredCount = girls.filter((girl) => girl.affection >= 80).length
+  const conqueredCount = girls.filter((girl) => girl.affection >= scoring.conqueredThreshold).length
   const blockedCount = girls.filter((girl) => girl.status === 'blocked').length
   const affectionScore = girls.reduce((sum, girl) => sum + girl.affection, 0)
   const score = Math.max(
     0,
-    conqueredCount * 300 +
-      affectionScore * 2 +
-      Math.floor(state.player.money / 10) -
-      Math.floor(state.player.totalSpent / 5) -
-      blockedCount * 120,
+    conqueredCount * scoring.conqueredBonus +
+      affectionScore * scoring.affectionMultiplier +
+      Math.floor(state.player.money / scoring.moneyDivisor) -
+      Math.floor(state.player.totalSpent / scoring.spentDivisor) -
+      blockedCount * scoring.blockedPenalty,
   )
   const gameOver = blockedCount === girls.length
 
   return {
     score,
     gameOver,
-    gameOverReason: gameOver ? '所有妹子都把你拉黑了。' : undefined,
+    gameOverReason: gameOver ? gameOverMessage : undefined,
   }
 }
 
 const buildInitialState = (): GameState => {
   const initialState: GameState = {
     player: {
-      money: 120,
+      money: balance.initialMoney,
       totalSpent: 0,
       totalEarned: 0,
       inventory: [],

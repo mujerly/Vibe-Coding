@@ -1,5 +1,6 @@
 import { getRelationshipStage } from '../girls/affectionLogic'
 import type { GirlState } from '../../store/gameTypes'
+import { Avatar } from '../../components/Avatar'
 
 interface ChatListProps {
   girls: Record<string, GirlState>
@@ -61,8 +62,8 @@ export function ChatList({ girls, onOpen }: ChatListProps) {
               onClick={() => onOpen(girl.profile.id)}
               className="mb-3 flex w-full items-start gap-3 rounded-[26px] bg-white/85 px-4 py-4 text-left shadow-soft transition hover:-translate-y-0.5 hover:bg-white"
             >
-              <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#fff4f0,#ffd4df)] text-3xl">
-                {girl.profile.avatar}
+              <div className="relative">
+                <Avatar avatar={girl.profile.avatar} name={girl.profile.name} size="lg" />
                 {girl.unreadCount > 0 ? (
                   <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
                     {girl.unreadCount}

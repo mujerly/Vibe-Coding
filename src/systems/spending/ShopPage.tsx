@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useGameStore } from '../../store/gameStore'
-
-const giftAdvice: Record<string, string> = {
-  'milk-tea': '推荐给：小甜 / 通用保底',
-  rose: '推荐给：小甜',
-  book: '推荐给：林悠悠',
-  lipstick: '推荐给：Jessica',
-  'luxury-bag': '推荐给：Jessica',
-  letter: '推荐给：林悠悠 / 小甜',
-}
+import { giftAdvice } from './shopData'
 
 export function ShopPage() {
   const shopItems = useGameStore((state) => state.economy.shopItems)

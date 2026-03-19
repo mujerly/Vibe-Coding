@@ -1,7 +1,7 @@
 import { siliconflowConfig, isSiliconflowEnabled } from '../../config/api'
 import type { GirlState, Message } from '../../store/gameTypes'
 import { getRelationshipStage } from '../girls/affectionLogic'
-import { girlDefinitions } from '../girls/girlProfiles'
+import { girlConfigs } from '../../data'
 import { getSystemPrompt } from '../girls/promptBuilder'
 
 interface ChatRequestContext {
@@ -107,65 +107,68 @@ const buildOpenAiHistory = (recentHistory: Message[]) =>
   }))
 
 const detectSignals = (playerMessage: string) => {
-  const text = playerMessage.toLowerCase()
-
   return {
     isOily: /(宝贝|亲爱的|老婆|宝宝|baby)/i.test(playerMessage),
     isSweet: /(想你|喜欢|可爱|陪你|晚安|想见|抱抱|在乎|第一时间)/i.test(playerMessage),
     isPractical: /(安排|礼物|请你|吃饭|下班|计划|餐厅|接你|周末|口红|包)/i.test(playerMessage),
     isDeep: /(书|电影|展览|画|音乐|哲学|创作|灵感|故事|颜色|诗)/i.test(playerMessage),
-    isLong: text.length >= 18,
+    isLong: playerMessage.length >= 18,
   }
 }
 
+/**
+ * Data-driven fallback: reads signal weights and reply templates from girl config.
+ * No more per-girl if/else branches.
+ */
 const buildLocalFallbackReply = (
   context: ChatRequestContext,
   debugReason?: string,
 ): ChatReplyPayload => {
-  const definition = girlDefinitions[context.girlId]
+  const girl = girlConfigs[context.girlId]
+  if (!girl) {
+    return {
+      reply: '嗯。',
+      affectionChange: 0,
+      mood: '自然',
+      source: 'fallback',
+      debugReason,
+    }
+  }
+
   const signals = detectSignals(context.playerMessage)
   const stage = getRelationshipStage(context.girl.affection)
   const mentionsGift = Boolean(context.extraContext)
 
+  const weights = girl.fallback.signalWeights
   let affectionChange = 0
-  let mood = '观望'
-  let reply = ''
+  affectionChange += signals.isSweet ? weights.sweet : 0
+  affectionChange += signals.isLong ? weights.long : 0
+  affectionChange += mentionsGift ? weights.gift : 0
+  affectionChange += signals.isOily ? weights.oily : 0
+  affectionChange += signals.isPractical ? weights.practical : 0
+  affectionChange += signals.isDeep ? weights.deep : 0
 
-  if (context.girlId === 'xiaotian') {
-    affectionChange += signals.isSweet ? 4 : 1
-    affectionChange += signals.isLong ? 1 : 0
-    affectionChange += mentionsGift ? 2 : 0
-    mood = affectionChange >= 4 ? '心动' : '试探'
-    reply =
-      affectionChange >= 4
-        ? '你这样讲我会忍不住开心诶🥺 我刚刚其实就在等你回，嘿嘿。'
-        : '我有看到啦，就是想知道你是不是会一直这样哄我呀。'
-  } else if (context.girlId === 'jessica') {
-    affectionChange += signals.isPractical ? 4 : 0
-    affectionChange += mentionsGift ? 2 : 0
-    affectionChange -= signals.isSweet ? 1 : 0
-    affectionChange -= signals.isOily ? 2 : 0
-    mood = affectionChange >= 4 ? '认可' : affectionChange <= 0 ? '挑剔' : '观察'
-    reply =
-      affectionChange >= 4
-        ? '这次还行，至少你不只是嘴上说说。Action 比话术重要，keep going.'
-        : '聊天可以，但别只停留在嘴上。我更看实际表现。'
-  } else {
-    affectionChange += signals.isDeep ? 4 : 0
-    affectionChange += signals.isLong ? 2 : 0
-    affectionChange += mentionsGift ? 1 : 0
-    affectionChange -= signals.isOily ? 5 : 0
-    mood = affectionChange >= 4 ? '被理解' : affectionChange < 0 ? '反感' : '平静'
-    reply =
-      affectionChange >= 4
-        ? '这句倒是挺真诚的，比那些现成话术有意思。我愿意继续聊下去。'
-        : affectionChange < 0
-          ? '这种说法有点太熟练了，像模板，不太像你真正想表达的东西。'
-          : `${definition.name}更在意你到底在想什么，而不是说得多热闹。`
+  // Base score if no signals matched
+  if (affectionChange === 0 && !signals.isOily) {
+    affectionChange = 1
   }
 
   if (stage === '热恋') {
     affectionChange += 1
+  }
+
+  let reply: string
+  let mood: string
+
+  if (affectionChange >= girl.fallback.goodThreshold) {
+    reply = girl.fallback.goodReply.text
+    mood = girl.fallback.goodReply.mood
+  } else if (affectionChange < 0 && girl.fallback.badReply) {
+    reply = girl.fallback.badReply.text
+    mood = girl.fallback.badReply.mood
+  } else {
+    reply = girl.fallback.neutralReply.text
+    mood = girl.fallback.neutralReply.mood
   }
 
   return {

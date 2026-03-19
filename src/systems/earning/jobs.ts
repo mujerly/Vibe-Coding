@@ -1,29 +1,6 @@
-import type { JobDefinition } from '../../store/gameTypes'
+import { jobConfigs } from '../../data'
 
-export const jobs: JobDefinition[] = [
-  {
-    id: 'delivery',
-    name: '送外卖',
-    emoji: '🚴',
-    duration: 30,
-    reward: 50,
-    description: '低风险快钱，适合临时回血。',
-  },
-  {
-    id: 'coding',
-    name: '写代码',
-    emoji: '💻',
-    duration: 120,
-    reward: 200,
-    description: '稳定高收益，但失联时间也最长。',
-  },
-  {
-    id: 'streaming',
-    name: '当主播',
-    emoji: '🎵',
-    duration: 90,
-    reward: 50,
-    rewardRange: [50, 500],
-    description: '看运气吃饭，爆了能一口气翻盘。',
-  },
-]
+/**
+ * Job definitions loaded from src/data/economy/jobs.json.
+ */
+export const jobs = jobConfigs

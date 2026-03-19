@@ -2,16 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { getRelationshipStage } from '../girls/affectionLogic'
 import { useGameStore } from '../../store/gameStore'
 import { GiftPicker } from './GiftPicker'
+import { girlConfigs } from '../../data'
+import { Avatar } from '../../components/Avatar'
 
 interface ChatRoomProps {
   girlId: string
   onBack: () => void
-}
-
-const quickPromptMap: Record<string, string[]> = {
-  xiaotian: ['刚忙完，第一时间来找你。', '周末带你去喝奶茶怎么样？', '今天有没有想我一点点？'],
-  jessica: ['这周末我订一家不错的餐厅，你有空吗？', '你今天 meeting 顺利吗？', '给你挑了支口红，见面拿给你。'],
-  linyouyou: ['你刚说的那张画，我有点好奇色调。', '最近有哪本书让你印象特别深吗？', '如果卡住了，你一般怎么找灵感？'],
 }
 
 export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
@@ -44,7 +40,7 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
 
   const relationshipStage = getRelationshipStage(girl.affection)
   const blocked = girl.status === 'blocked'
-  const quickPrompts = quickPromptMap[girlId] ?? []
+  const quickPrompts = girlConfigs[girlId]?.quickPrompts ?? []
   const replySourceLabel =
     girl.lastReplySource == null ? null : girl.lastReplySource === 'ai' ? '云端 AI' : '本地保底'
   const fallbackReason =
@@ -102,7 +98,7 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
           </button>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <div className="text-2xl">{girl.profile.avatar}</div>
+              <Avatar avatar={girl.profile.avatar} name={girl.profile.name} size="md" />
               <div className="min-w-0">
                 <h2 className="truncate text-base font-semibold text-ink">{girl.profile.name}</h2>
                 <p className="truncate text-xs text-wine/55">
@@ -169,12 +165,17 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
           return (
             <div
               key={message.id}
-              className={`flex ${isPlayer ? 'justify-end' : 'justify-start'} ${
+              className={`flex items-end gap-2 ${isPlayer ? 'justify-end' : 'justify-start'} ${
                 isSystem ? 'justify-center' : ''
               }`}
             >
+              {!isPlayer && !isSystem ? (
+                <div className="shrink-0 pb-1">
+                  <Avatar avatar={girl.profile.avatar} name={girl.profile.name} size="sm" />
+                </div>
+              ) : null}
               <div
-                className={`max-w-[82%] rounded-[24px] px-4 py-3 text-sm leading-6 shadow-soft ${
+                className={`max-w-[75%] rounded-[24px] px-4 py-3 text-sm leading-6 shadow-soft ${
                   isSystem
                     ? 'bg-slate-100 text-slate-500'
                     : isPlayer
@@ -189,7 +190,10 @@ export function ChatRoom({ girlId, onBack }: ChatRoomProps) {
         })}
 
         {sending ? (
-          <div className="flex justify-start">
+          <div className="flex items-end gap-2 justify-start">
+            <div className="shrink-0 pb-1">
+              <Avatar avatar={girl.profile.avatar} name={girl.profile.name} size="sm" />
+            </div>
             <div className="rounded-[24px] rounded-bl-md bg-white px-4 py-3 text-sm text-wine/55 shadow-soft">
               对方正在输入...
             </div>

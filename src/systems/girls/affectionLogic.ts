@@ -1,43 +1,49 @@
 import type { Gift } from '../../store/gameTypes'
-import { girlDefinitions } from './girlProfiles'
+import { girlConfigs, balance } from '../../data'
 
 export const clampAffection = (value: number) => Math.max(0, Math.min(100, value))
 
 export const getRelationshipStage = (affection: number) => {
-  if (affection >= 80) return '热恋'
-  if (affection >= 60) return '暧昧'
-  if (affection >= 40) return '有兴趣'
-  if (affection >= 20) return '礼貌'
-  return '冷淡'
+  const tiers = balance.affectionTiers
+  for (let i = tiers.length - 1; i >= 0; i--) {
+    if (affection >= tiers[i].min) return tiers[i].label
+  }
+  return tiers[0].label
 }
 
 export const resolveGirlStatus = (
   affection: number,
   mood: string,
 ): 'normal' | 'suspicious' | 'angry' | 'blocked' => {
-  if (affection <= 0) return 'blocked'
-  if (affection < 15 || /生气|失望|厌烦|反感|冷掉/.test(mood)) return 'angry'
-  if (affection < 30 || /怀疑|试探|观察/.test(mood)) return 'suspicious'
+  const { statusThresholds } = balance
+
+  if (affection <= statusThresholds.blocked) return 'blocked'
+
+  const angryPattern = new RegExp(statusThresholds.angryMoodPatterns.join('|'))
+  if (affection < statusThresholds.angry || angryPattern.test(mood)) return 'angry'
+
+  const suspiciousPattern = new RegExp(statusThresholds.suspiciousMoodPatterns.join('|'))
+  if (affection < statusThresholds.suspicious || suspiciousPattern.test(mood)) return 'suspicious'
+
   return 'normal'
 }
 
 export const getGiftPreferenceDelta = (girlId: string, gift: Gift) => {
-  const definition = girlDefinitions[girlId]
+  const girl = girlConfigs[girlId]
+  const pref = balance.giftPreference
 
-  if (!definition) return 0
-  if (definition.likedGiftIds.includes(gift.id)) return gift.price === 0 ? 4 : 6
-  if (definition.dislikedGiftIds.includes(gift.id)) return -4
-  if (gift.id === 'milk-tea') return 2
-  if (gift.id === 'luxury-bag' && girlId === 'linyouyou') return -2
-  return 1
+  if (!girl) return 0
+  if (girl.likedGiftIds.includes(gift.id)) return gift.price === 0 ? pref.likedFreeDelta : pref.likedDelta
+  if (girl.dislikedGiftIds.includes(gift.id)) return pref.dislikedDelta
+  return pref.defaultDelta
 }
 
 export const getGirlReaction = (girlId: string, gift: Gift) => {
-  const definition = girlDefinitions[girlId]
+  const girl = girlConfigs[girlId]
 
   return (
-    definition?.giftReactions[gift.id] ??
-    `${definition?.name ?? '她'}会根据这份礼物重新判断你的诚意。`
+    girl?.giftReactions[gift.id] ??
+    `${girl?.name ?? '她'}会根据这份礼物重新判断你的诚意。`
   )
 }
 
@@ -46,19 +52,20 @@ export const getDelayedReplyPenalty = (
   durationSeconds: number,
   affection: number,
 ) => {
-  const definition = girlDefinitions[girlId]
-  if (!definition) return 0
+  const girl = girlConfigs[girlId]
+  if (!girl) return 0
 
-  const timePenalty = Math.max(1, Math.floor(durationSeconds / 45))
-  const affectionPressure = affection >= 60 ? 1 : 0
+  const { delayPenalty } = balance
+  const timePenalty = Math.max(1, Math.floor(durationSeconds / delayPenalty.secondsPerTick))
+  const affectionPressure = affection >= delayPenalty.highAffectionThreshold ? delayPenalty.highAffectionExtra : 0
 
-  return Math.ceil((timePenalty + affectionPressure) * definition.anxiousWaitMultiplier)
+  return Math.ceil((timePenalty + affectionPressure) * girl.anxiousWaitMultiplier)
 }
 
 export const getWorkComplaintMessage = (girlId: string) => {
-  const definition = girlDefinitions[girlId]
-  if (!definition) return '你刚刚怎么突然消失了？'
+  const girl = girlConfigs[girlId]
+  if (!girl) return '你刚刚怎么突然消失了？'
 
-  const index = Math.floor(Math.random() * definition.checkInTemplates.length)
-  return definition.checkInTemplates[index]
+  const index = Math.floor(Math.random() * girl.checkInTemplates.length)
+  return girl.checkInTemplates[index]
 }
