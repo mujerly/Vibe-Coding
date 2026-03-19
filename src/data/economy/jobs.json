@@ -5,7 +5,9 @@
     "emoji": "🚴",
     "duration": 30,
     "reward": 50,
-    "description": "低风险快钱，适合临时回血。"
+    "description": "接单后进入骑手地图，用十字键穿过随机路线完成取餐和送达。",
+    "mode": "delivery",
+    "completionMode": "manual"
   },
   {
     "id": "coding",
@@ -13,7 +15,9 @@
     "emoji": "💻",
     "duration": 120,
     "reward": 200,
-    "description": "稳定高收益，但失联时间也最长。"
+    "description": "稳定高收益，但失联时间也最长。",
+    "mode": "timed",
+    "completionMode": "timer"
   },
   {
     "id": "streaming",
@@ -22,6 +26,18 @@
     "duration": 90,
     "reward": 50,
     "rewardRange": [50, 500],
-    "description": "看运气吃饭，爆了能一口气翻盘。"
+    "description": "看运气吃饭，爆了能一口气翻盘。",
+    "mode": "timed",
+    "completionMode": "timer"
+  },
+  {
+    "id": "taobao-review",
+    "name": "淘宝刷单",
+    "emoji": "⭐",
+    "duration": 12,
+    "reward": 1,
+    "description": "把三排星星全部拉满再发布评价，完成一单到账 1 块钱。",
+    "mode": "review",
+    "completionMode": "manual"
   }
 ]

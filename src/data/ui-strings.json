@@ -22,7 +22,7 @@
     ],
     "strategyHints": [
       "小甜：吃甜话术和奶茶、玫瑰。",
-      "Jessica：看实际投入，礼物比空话有效。",
+      "Jessica：看实际投入，礼物比空话更有效。",
       "林悠悠：真诚聊内容，不要油腻称呼。"
     ]
   },
@@ -97,7 +97,33 @@
     "workingWarning": "这段时间不能聊天，注意别让关系一起掉下去。",
     "idleHint": "你现在是空闲状态。建议先赚点基础资金，再去买礼物补关键关系。",
     "jobStarted": "{name} 开始了，期间不能聊天。",
-    "jobFailed": "开工失败"
+    "jobFailed": "开工失败",
+    "manualSettled": "{name} 完成，到账 ¥{reward}",
+    "deliverySubtitle": "使用十字键或键盘方向键控制骑手，在随机地图里完成取餐和送达。",
+    "deliveryControls": "十字键 / 键盘方向键",
+    "deliveryProgress": "订单进度 {current}/{total}",
+    "deliveryGoal": "当前目标",
+    "deliverySteps": "移动步数",
+    "deliveryPickup": "取外卖",
+    "deliveryDropoff": "送外卖",
+    "deliveryPickedUp": "已取到餐，继续前往顾客位置。",
+    "deliveryDelivered": "已送达，订单完成。",
+    "deliveryUp": "上移",
+    "deliveryDown": "下移",
+    "deliveryLeft": "左移",
+    "deliveryRight": "右移",
+    "reviewTitle": "淘宝刷单",
+    "reviewSubtitle": "把三排星星全部拉满，再发布评价就能完成一单。",
+    "reviewReward": "完成一单到账 ¥{reward}",
+    "reviewTip": "描述相符、物流服务、服务态度三项都要拉满，刷单次数没有上限。",
+    "reviewCategoryMatch": "描述相符",
+    "reviewCategoryLogistics": "物流服务",
+    "reviewCategoryService": "服务态度",
+    "reviewCommentLabel": "评价内容",
+    "reviewCommentPlaceholder": "补一句万能好评，会更像真的。",
+    "reviewDefaultComment": "质量很好，发货也快，客服回复及时，下次还来，五星好评！",
+    "reviewSubmit": "发布评价",
+    "reviewSubmitDisabled": "先把三排星星全部点满"
   },
   "shop": {
     "topLabel": "花钱系统",

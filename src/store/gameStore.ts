@@ -217,6 +217,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           duration: job.duration,
           reward,
           startTime: Date.now(),
+          mode: job.mode ?? 'timed',
+          completionMode: job.completionMode ?? 'timer',
         },
       },
       gameTime: Date.now(),
@@ -231,13 +233,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     if (!currentJob) return 0
 
+    const elapsedSeconds = Math.max(1, Math.ceil((Date.now() - currentJob.startTime) / 1000))
+    const penaltyDuration =
+      currentJob.completionMode === 'manual'
+        ? elapsedSeconds
+        : Math.max(currentJob.duration, elapsedSeconds)
+
     const nextGirls = Object.fromEntries(
       Object.entries(state.girls).map(([girlId, girl]) => {
         if (girl.status === 'blocked') {
           return [girlId, girl]
         }
 
-        const penalty = getDelayedReplyPenalty(girlId, currentJob.duration, girl.affection)
+        const penalty = getDelayedReplyPenalty(girlId, penaltyDuration, girl.affection)
         const nextAffection = clampAffection(girl.affection - penalty)
         const complaintMessage = createMessage('girl', getWorkComplaintMessage(girlId))
         const mood = penalty >= 3 ? uiStrings.system.workPenaltyMoodBad : uiStrings.system.workPenaltyMoodMild

@@ -216,8 +216,14 @@ src/data/
 | `reward` | number | 基础收入 |
 | `rewardRange` | [number, number] | 可选。设置后收入在 [min, max] 之间随机 |
 | `description` | string | 描述 |
+| `mode` | string | 工作模式。当前支持 `timed`、`delivery`、`review` |
+| `completionMode` | string | 结算方式。`timer` = 倒计时自动结算，`manual` = 完成交互后结算 |
 
-注意：打工期间玩家无法回消息，时间越长妹子掉好感越多。
+注意：
+
+- 打工期间玩家无法回消息，时间越长妹子掉好感越多。
+- `delivery` 和 `review` 属于交互型工作，会进入单独的操作界面。
+- 如果继续新增小游戏工作，优先沿用 `mode + completionMode` 这组字段。
 
 ---
 
@@ -315,7 +321,7 @@ src/data/
 | `chatList` | 通讯录页面 | `title`、`statusLabels`（状态正常/开始怀疑/正在生气/已拉黑） |
 | `chatRoom` | 聊天室 | `send`、`typing`、`busyWarning`、`blockedWarning`、占位文字 |
 | `giftPicker` | 礼物选择弹窗 | `title`、`empty`（背包空提示）、`stock`（库存） |
-| `earning` | 打工页面 | `title`、`subtitle`、`workingWarning`、`idleHint`、`jobStarted` |
+| `earning` | 打工页面与交互工作页面 | `title`、`subtitle`、`workingWarning`、`idleHint`、`jobStarted`、`deliveryPickup`、`reviewTitle` |
 | `shop` | 商店页面 | `title`、`subtitle`、`buyButton`、`insufficientFunds` |
 | `errors` | 所有错误提示 | `noMoney`、`girlBlocked`、`emptyMessage`、`busyCantReply` |
 | `system` | 系统消息 | `girlBlockedNotice`（拉黑通知）、`workPenaltyMoodBad`/`Mild`（情绪词） |

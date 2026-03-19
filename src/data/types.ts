@@ -219,6 +219,32 @@ export interface UiStringsConfig {
     idleHint: string
     jobStarted: string
     jobFailed: string
+    manualSettled: string
+    deliverySubtitle: string
+    deliveryControls: string
+    deliveryProgress: string
+    deliveryGoal: string
+    deliverySteps: string
+    deliveryPickup: string
+    deliveryDropoff: string
+    deliveryPickedUp: string
+    deliveryDelivered: string
+    deliveryUp: string
+    deliveryDown: string
+    deliveryLeft: string
+    deliveryRight: string
+    reviewTitle: string
+    reviewSubtitle: string
+    reviewReward: string
+    reviewTip: string
+    reviewCategoryMatch: string
+    reviewCategoryLogistics: string
+    reviewCategoryService: string
+    reviewCommentLabel: string
+    reviewCommentPlaceholder: string
+    reviewDefaultComment: string
+    reviewSubmit: string
+    reviewSubmitDisabled: string
   }
   shop: {
     topLabel: string

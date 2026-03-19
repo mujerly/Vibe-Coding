@@ -44,6 +44,8 @@ export interface JobDefinition {
   reward: number
   description: string
   rewardRange?: [number, number]
+  mode?: 'timed' | 'delivery' | 'review'
+  completionMode?: 'timer' | 'manual'
 }
 
 export interface CurrentJob {
@@ -51,6 +53,8 @@ export interface CurrentJob {
   duration: number
   reward: number
   startTime: number
+  mode: 'timed' | 'delivery' | 'review'
+  completionMode: 'timer' | 'manual'
 }
 
 export interface GameState {
