@@ -23,7 +23,7 @@
     "defaultDelta": 1
   },
   "delayPenalty": {
-    "secondsPerTick": 45,
+    "minutesPerTick": 45,
     "highAffectionThreshold": 60,
     "highAffectionExtra": 1
   },

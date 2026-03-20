@@ -342,7 +342,9 @@ export function DeliveryGame({ job, reward, onComplete }: DeliveryGameProps) {
     })
   }
 
-  moveRef.current = moveRider
+  useEffect(() => {
+    moveRef.current = moveRider
+  })
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

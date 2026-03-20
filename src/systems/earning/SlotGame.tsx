@@ -7,7 +7,8 @@ import type { JobDefinition } from '../../store/gameTypes'
 
 interface SlotGameProps {
   job: JobDefinition
-  onComplete: (result: SlotSpinResult) => void
+  onSpinComplete: (result: SlotSpinResult) => void
+  onExit: () => void
 }
 
 export interface SlotSpinResult {
@@ -39,36 +40,50 @@ const randomReels = (): [SlotSymbolConfig, SlotSymbolConfig, SlotSymbolConfig] =
   pickWeightedSymbol(),
 ]
 
-export function SlotGame({ job, onComplete }: SlotGameProps) {
+export function SlotGame({ job, onSpinComplete, onExit }: SlotGameProps) {
   const s = uiStrings.earning
+  const currentJob = useGameStore((state) => state.player.currentJob)
   const money = useGameStore((state) => state.player.money)
   const spinCost = job.cost ?? 5
   const jackpot = slotSymbols[slotSymbols.length - 1].payout
   const [reels, setReels] = useState<[SlotSymbolConfig, SlotSymbolConfig, SlotSymbolConfig]>(() => randomReels())
   const [isSpinning, setIsSpinning] = useState(false)
   const [result, setResult] = useState<SlotSpinResult | null>(null)
+  const [now, setNow] = useState(() => Date.now())
   const intervalRef = useRef<number | null>(null)
-  const settleRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNow(Date.now())
+    }, 1000)
+
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     return () => {
       if (intervalRef.current != null) {
         window.clearInterval(intervalRef.current)
       }
-      if (settleRef.current != null) {
-        window.clearTimeout(settleRef.current)
-      }
     }
   }, [])
 
+  const spinCount = currentJob?.spinCount ?? 0
+  const sessionEarned = currentJob?.sessionEarned ?? 0
+  const sessionSpent = currentJob?.sessionSpent ?? 0
+  const sessionNet = sessionEarned - sessionSpent
+  const busySeconds = currentJob
+    ? Math.max(
+        Math.max(1, Math.ceil((now - currentJob.startTime) / 1000)),
+        currentJob.trackedDuration,
+      )
+    : 0
+
   const spin = () => {
-    if (isSpinning || result != null || money < spinCost) return
+    if (isSpinning || money < spinCost) return
 
     if (intervalRef.current != null) {
       window.clearInterval(intervalRef.current)
-    }
-    if (settleRef.current != null) {
-      window.clearTimeout(settleRef.current)
     }
 
     const finalReels = randomReels()
@@ -104,14 +119,11 @@ export function SlotGame({ job, onComplete }: SlotGameProps) {
       setReels(finalReels)
       setResult(nextResult)
       setIsSpinning(false)
-
-      settleRef.current = window.setTimeout(() => {
-        onComplete(nextResult)
-      }, nextResult.isJackpot ? 1700 : 1350)
+      onSpinComplete(nextResult)
     }, 90)
   }
 
-  const canSpin = !isSpinning && result == null && money >= spinCost
+  const canSpin = !isSpinning && money >= spinCost
   const resultTone = result?.isWin ? 'emerald' : 'rose'
 
   return (
@@ -137,6 +149,31 @@ export function SlotGame({ job, onComplete }: SlotGameProps) {
             </div>
             <div className="rounded-full bg-[#ffe59a] px-3.5 py-2 text-[#713f12]">
               {t(s.slotJackpot, { reward: jackpot })}
+            </div>
+            <button
+              type="button"
+              onClick={onExit}
+              disabled={isSpinning}
+              className="w-full rounded-full bg-white/15 px-3.5 py-2 text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {s.slotExitButton}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-3 text-center text-[12px] font-semibold">
+          <div className="rounded-[20px] bg-white/10 px-3 py-3">
+            <div className="text-white/60">{s.slotSpinCount}</div>
+            <div className="mt-1 text-xl text-white">{spinCount}</div>
+          </div>
+          <div className="rounded-[20px] bg-white/10 px-3 py-3">
+            <div className="text-white/60">{s.slotBusyTime}</div>
+            <div className="mt-1 text-xl text-white">{busySeconds}s</div>
+          </div>
+          <div className="rounded-[20px] bg-white/10 px-3 py-3">
+            <div className="text-white/60">{s.slotNet}</div>
+            <div className={`mt-1 text-xl ${sessionNet >= 0 ? 'text-[#ffe59a]' : 'text-rose-200'}`}>
+              ¥{sessionNet}
             </div>
           </div>
         </div>
@@ -196,7 +233,7 @@ export function SlotGame({ job, onComplete }: SlotGameProps) {
                     </>
                   ) : (
                     <>
-                      <div className="text-base font-bold text-white">{isSpinning ? s.slotSpinning : '准备开一把'}</div>
+                      <div className="text-base font-bold text-white">{isSpinning ? s.slotSpinning : '继续拉一把'}</div>
                       <div className="mt-1 text-[13px] text-white/65">
                         {canSpin ? s.slotRules : t(s.slotNeedMoney, { cost: spinCost })}
                       </div>

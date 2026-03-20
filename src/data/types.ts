@@ -25,6 +25,35 @@ export interface GirlPromptConfig {
   softSpots: string[]
 }
 
+/** Sticker item in a girl's sticker pack */
+export interface GirlStickerConfig {
+  id: string
+  asset: string
+  keywords: string[]
+}
+
+/** Semantic-to-sticker mapping rule */
+export interface GirlStickerSemanticRule {
+  intent: string
+  stickerId: string
+  triggerPhrases: string[]
+}
+
+/** Sticker pack configuration per girl */
+export interface GirlStickerPackConfig {
+  stickers: GirlStickerConfig[]
+  semanticMap: GirlStickerSemanticRule[]
+}
+
+/** Daily routine configuration for a girl */
+export interface GirlRoutineConfig {
+  wakeHour: number
+  sleepHour: number
+  busyHours: number[]
+  busyLabel: string
+  onlineLabel: string
+}
+
 /** Fallback reply template */
 export interface FallbackReplyTemplate {
   text: string
@@ -64,6 +93,7 @@ export interface GirlConfig {
   intro: string
   checkInTemplates: string[]
   quickPrompts: string[]
+  routine: GirlRoutineConfig
   prompt: GirlPromptConfig
   giftReactions: Record<string, string>
   fallback: GirlFallbackConfig
@@ -128,7 +158,7 @@ export interface GiftPreferenceConfig {
 
 /** Delay penalty configuration */
 export interface DelayPenaltyConfig {
-  secondsPerTick: number
+  minutesPerTick: number
   highAffectionThreshold: number
   highAffectionExtra: number
 }
@@ -223,6 +253,7 @@ export interface UiStringsConfig {
     fallbackMode: string
   }
   statusBar: {
+    dayLabel: string
     aiCloud: string
     aiFallback: string
     working: string
@@ -234,6 +265,7 @@ export interface UiStringsConfig {
     subtitle: string
     sessionCount: string
     noMessages: string
+    stickerPreview: string
     statusLabels: Record<string, string>
   }
   chatRoom: {
@@ -266,10 +298,13 @@ export interface UiStringsConfig {
     topLabel: string
     title: string
     subtitle: string
+    timeCostLabel: string
     estimatedIncome: string
     remaining: string
     timeUnit: string
     workingWarning: string
+    focusLabel: string
+    workFailed: string
     idleHint: string
     jobStarted: string
     jobFailed: string
@@ -291,6 +326,11 @@ export interface UiStringsConfig {
     slotLoseFeedback: string
     slotWinFeedback: string
     slotJackpotFeedback: string
+    slotSpinCount: string
+    slotBusyTime: string
+    slotExitButton: string
+    slotExitFeedback: string
+    slotResetMessage: string
     deliverySubtitle: string
     deliveryControls: string
     deliveryProgress: string
@@ -324,6 +364,7 @@ export interface UiStringsConfig {
     balance: string
     backpackCount: string
     purchased: string
+    purchasedWithTime: string
     purchaseFailed: string
     buyButton: string
     insufficientFunds: string

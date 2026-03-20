@@ -1,6 +1,7 @@
 import type { GirlProfile, GirlState } from '../../store/gameTypes'
 import { girlConfigs, balance } from '../../data'
 import type { GirlConfig } from '../../data/types'
+import { addGameMinutes, createInitialGameTime } from '../../utils/timeSystem'
 
 export type { GirlConfig }
 
@@ -10,12 +11,13 @@ export type { GirlConfig }
  */
 export const girlDefinitions: Record<string, GirlConfig> = girlConfigs
 
-export const createInitialGirlsState = (): Record<string, GirlState> => {
-  const now = Date.now()
+export const createInitialGirlsState = (
+  initialGameTime = createInitialGameTime(),
+): Record<string, GirlState> => {
   const girls = Object.values(girlDefinitions)
 
   return girls.reduce<Record<string, GirlState>>((acc, girl, index) => {
-    const timestamp = now - (girls.length - index) * 60 * 1000
+    const timestamp = addGameMinutes(initialGameTime, -(girls.length - index) * 50)
 
     const profile: GirlProfile = {
       id: girl.id,

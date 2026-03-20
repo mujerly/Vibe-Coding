@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ActionResult, GameState, Gift, Message, WorkSettlement } from './gameTypes'
+import type { ActionResult, GameState, Gift, GirlState, Message, WorkSettlement } from './gameTypes'
 import { createInitialGirlsState } from '../systems/girls/girlProfiles'
 import { jobs } from '../systems/earning/jobs'
 import { shopItems } from '../systems/spending/shopData'
@@ -12,7 +12,17 @@ import {
   resolveGirlStatus,
 } from '../systems/girls/affectionLogic'
 import { generateChatReply } from '../systems/chat/chatEngine'
+import { parseGirlReplySegments } from '../systems/chat/stickerProtocol'
 import { balance, uiStrings, t } from '../data'
+import {
+  addGameMinutes,
+  createInitialGameTime,
+  getGiftSendTimeCost,
+  getGirlRoutineStatus,
+  getPurchaseTimeCost,
+  getWorkActionFocusLoss,
+  isWorkRewardLost,
+} from '../utils/timeSystem'
 
 interface GameActions {
   sendMessage: (girlId: string, text: string) => Promise<ActionResult>
@@ -27,7 +37,9 @@ interface GameActions {
   getShopItems: () => Gift[]
   startWork: (jobType: string) => ActionResult
   finishWork: () => number
+  applyWorkOutcome: (reward: number, cost?: number) => WorkSettlement | null
   finishWorkWithOutcome: (reward: number, cost?: number) => WorkSettlement | null
+  cancelWork: () => void
   isPlayerBusy: () => boolean
   getWorkProgress: () => number
   updateAffection: (girlId: string, change: number, mood?: string) => void
@@ -40,13 +52,89 @@ const createMessage = (
   role: 'player' | 'girl' | 'system',
   content: string,
   giftId?: string,
+  timestamp = Date.now(),
+  stickerId?: string,
 ): Message => ({
-  id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  id: `${role}-${timestamp}-${Math.random().toString(36).slice(2, 8)}`,
   role,
   content,
-  timestamp: Date.now(),
+  timestamp,
   giftId,
+  stickerId,
 })
+
+const trailingReplyPunctuationPattern = /[。！？!?.,，；：~…]+$/u
+
+const normalizeGirlReplyChunk = (content: string) =>
+  content.trim().replace(trailingReplyPunctuationPattern, '').trim()
+
+export const createGirlReplyMessages = (reply: string, baseTimestamp: number) => {
+  const chunks = reply
+    .split(/\s*\/\/\/\s*/g)
+    .map(normalizeGirlReplyChunk)
+    .filter(Boolean)
+
+  const safeChunks =
+    chunks.length > 0
+      ? chunks
+      : [normalizeGirlReplyChunk(reply) || '嗯']
+
+  return safeChunks.map((chunk, index) =>
+    createMessage('girl', chunk, undefined, baseTimestamp + index * 60_000),
+  )
+}
+
+const applyWorkInterruption = (
+  currentJob: GameState['player']['currentJob'],
+  minutes: number,
+  focusLoss = 0,
+) => {
+  if (!currentJob) return undefined
+
+  return {
+    ...currentJob,
+    interruptionMinutes: currentJob.interruptionMinutes + minutes,
+    focus:
+      currentJob.mode === 'slot'
+        ? currentJob.focus
+        : Math.max(0, currentJob.focus - focusLoss),
+  }
+}
+
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+
+const replyTypingMsPerChar = 600
+const minimumReplyTypingMs = 800
+const stickerTypingUnits = 2
+
+const getReplySegments = (girlId: string, reply: string) => parseGirlReplySegments(girlId, reply)
+
+const getReplySegmentTypingDuration = (
+  segment: ReturnType<typeof parseGirlReplySegments>[number],
+) => {
+  if (segment.stickerId) {
+    return Math.max(minimumReplyTypingMs, stickerTypingUnits * replyTypingMsPerChar)
+  }
+
+  const visibleLength = segment.content.replace(/\s+/g, '').length
+  return Math.max(minimumReplyTypingMs, Math.max(visibleLength, 1) * replyTypingMsPerChar)
+}
+
+const waitForFirstReplyTiming = async (
+  firstSegment: ReturnType<typeof parseGirlReplySegments>[number],
+  requestStartedAt: number,
+) => {
+  const actualLatency = Date.now() - requestStartedAt
+  const simulatedDuration = getReplySegmentTypingDuration(firstSegment)
+  const remainingDelay = Math.max(0, simulatedDuration - actualLatency)
+
+  if (remainingDelay > 0) {
+    await wait(remainingDelay)
+  }
+}
 
 const appendBlockNotice = (
   history: Message[],
@@ -85,6 +173,7 @@ const computeDerivedState = (state: Pick<GameState, 'player' | 'girls'>) => {
 }
 
 const buildInitialState = (): GameState => {
+  const initialGameTime = createInitialGameTime()
   const initialState: GameState = {
     player: {
       money: balance.initialMoney,
@@ -93,11 +182,11 @@ const buildInitialState = (): GameState => {
       inventory: [],
       timeStatus: 'idle',
     },
-    girls: createInitialGirlsState(),
+    girls: createInitialGirlsState(initialGameTime),
     economy: {
       shopItems,
     },
-    gameTime: Date.now(),
+    gameTime: initialGameTime,
     score: 0,
     gameOver: false,
   }
@@ -115,12 +204,14 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     if (!currentJob) return null
 
-    const reward = rewardOverride ?? currentJob.reward
-    const elapsedSeconds = Math.max(1, Math.ceil((Date.now() - currentJob.startTime) / 1000))
-    const penaltyDuration =
-      currentJob.completionMode === 'manual'
-        ? elapsedSeconds
-        : Math.max(currentJob.duration, elapsedSeconds)
+    const reward = isWorkRewardLost(currentJob) ? 0 : rewardOverride ?? currentJob.reward
+    const baseWorkMinutes =
+      currentJob.trackedTimeMinutes > 0 ? currentJob.trackedTimeMinutes : currentJob.timeCostMinutes
+    const penaltyDuration = baseWorkMinutes + currentJob.interruptionMinutes
+    const settlementTime =
+      currentJob.trackedTimeMinutes > 0
+        ? state.gameTime
+        : addGameMinutes(state.gameTime, currentJob.timeCostMinutes)
 
     const nextGirls = Object.fromEntries(
       Object.entries(state.girls).map(([girlId, girl]) => {
@@ -130,7 +221,12 @@ export const useGameStore = create<GameStore>((set, get) => {
 
         const penalty = getDelayedReplyPenalty(girlId, penaltyDuration, girl.affection)
         const nextAffection = clampAffection(girl.affection - penalty)
-        const complaintMessage = createMessage('girl', getWorkComplaintMessage(girlId))
+        const complaintMessage = createMessage(
+          'girl',
+          getWorkComplaintMessage(girlId),
+          undefined,
+          settlementTime,
+        )
         const mood = penalty >= 3 ? uiStrings.system.workPenaltyMoodBad : uiStrings.system.workPenaltyMoodMild
         const nextStatus = resolveGirlStatus(nextAffection, mood)
         const nextHistory = appendBlockNotice(
@@ -167,7 +263,7 @@ export const useGameStore = create<GameStore>((set, get) => {
     set(() => ({
       player: nextPlayer,
       girls: nextGirls,
-      gameTime: Date.now(),
+      gameTime: settlementTime,
       ...computeDerivedState({
         player: nextPlayer,
         girls: nextGirls,
@@ -179,6 +275,81 @@ export const useGameStore = create<GameStore>((set, get) => {
       cost,
       net: reward - cost,
     }
+  }
+
+  const deliverGirlReplySequence = async (
+    girlId: string,
+    reply: string,
+    requestStartedAt: number,
+    firstReplyTimestamp: number,
+    finalizeGirl: (
+      latestGirl: GirlState,
+      lastReplyMessage: Message,
+      historyWithReply: Message[],
+    ) => GirlState,
+  ) => {
+    const segments = getReplySegments(girlId, reply)
+    const [firstSegment, ...restSegments] = segments
+    if (!firstSegment) return null
+
+    await waitForFirstReplyTiming(firstSegment, requestStartedAt)
+
+    const allSegments = [firstSegment, ...restSegments]
+    let lastReplyMessage: Message | null = null
+
+    for (const [index, segment] of allSegments.entries()) {
+      if (index > 0) {
+        await wait(getReplySegmentTypingDuration(segment))
+      }
+
+      const replyMessage = createMessage(
+        'girl',
+        segment.content,
+        undefined,
+        firstReplyTimestamp + index * 60_000,
+        segment.stickerId,
+      )
+
+      lastReplyMessage = replyMessage
+
+      set((state) => {
+        const latestGirl = state.girls[girlId]
+        if (!latestGirl) return state
+
+        const historyWithReply = [...latestGirl.chatHistory, replyMessage]
+
+        if (index < allSegments.length - 1) {
+          return {
+            girls: {
+              ...state.girls,
+              [girlId]: {
+                ...latestGirl,
+                chatHistory: historyWithReply,
+                lastContactTime: replyMessage.timestamp,
+              },
+            },
+            gameTime: replyMessage.timestamp,
+          }
+        }
+
+        const finalizedGirl = finalizeGirl(latestGirl, replyMessage, historyWithReply)
+        const nextGirls = {
+          ...state.girls,
+          [girlId]: finalizedGirl,
+        }
+
+        return {
+          girls: nextGirls,
+          gameTime: replyMessage.timestamp,
+          ...computeDerivedState({
+            player: state.player,
+            girls: nextGirls,
+          }),
+        }
+      })
+    }
+
+    return lastReplyMessage
   }
 
   return {
@@ -208,21 +379,28 @@ export const useGameStore = create<GameStore>((set, get) => {
   buyGift: (giftId) => {
     const state = get()
     const gift = state.economy.shopItems.find((item) => item.id === giftId)
+    const timeCost = getPurchaseTimeCost(giftId)
 
     if (!gift) return { ok: false, error: uiStrings.errors.giftNotFound }
     if (state.player.money < gift.price) return { ok: false, error: uiStrings.errors.noMoney }
 
     set((current) => {
+      const nextCurrentJob = applyWorkInterruption(
+        current.player.currentJob,
+        timeCost,
+        getWorkActionFocusLoss('shop'),
+      )
       const nextPlayer = {
         ...current.player,
         money: current.player.money - gift.price,
         totalSpent: current.player.totalSpent + gift.price,
         inventory: [...current.player.inventory, gift],
+        currentJob: nextCurrentJob,
       }
 
       return {
         player: nextPlayer,
-        gameTime: Date.now(),
+        gameTime: addGameMinutes(current.gameTime, timeCost),
         ...computeDerivedState({
           player: nextPlayer,
           girls: current.girls,
@@ -294,13 +472,21 @@ export const useGameStore = create<GameStore>((set, get) => {
         currentJob: {
           type: job.id,
           duration: job.duration,
+          timeCostMinutes: job.timeCostMinutes,
           reward,
           startTime: Date.now(),
           mode: job.mode ?? 'timed',
           completionMode: job.completionMode ?? 'timer',
+          trackedDuration: 0,
+          trackedTimeMinutes: 0,
+          interruptionMinutes: 0,
+          sessionSpent: 0,
+          sessionEarned: 0,
+          spinCount: 0,
+          focus: 100,
         },
       },
-      gameTime: Date.now(),
+      gameTime: current.gameTime,
     }))
 
     return { ok: true }
@@ -310,7 +496,68 @@ export const useGameStore = create<GameStore>((set, get) => {
     return settleCurrentWork()?.reward ?? 0
   },
 
+  applyWorkOutcome: (reward, cost = 0) => {
+    const state = get()
+    const currentJob = state.player.currentJob
+
+    if (!currentJob) return null
+
+    const nextCurrentJob = {
+      ...currentJob,
+      trackedDuration: currentJob.trackedDuration + currentJob.duration,
+      trackedTimeMinutes: currentJob.trackedTimeMinutes + currentJob.timeCostMinutes,
+      sessionSpent: currentJob.sessionSpent + cost,
+      sessionEarned: currentJob.sessionEarned + Math.max(0, reward),
+      spinCount: currentJob.spinCount + 1,
+    }
+
+    const nextPlayer = {
+      ...state.player,
+      money: state.player.money - cost + reward,
+      totalSpent: state.player.totalSpent + cost,
+      totalEarned: state.player.totalEarned + Math.max(0, reward),
+      currentJob: nextCurrentJob,
+    }
+
+    set(() => ({
+      player: nextPlayer,
+      gameTime: addGameMinutes(state.gameTime, currentJob.timeCostMinutes),
+      ...computeDerivedState({
+        player: nextPlayer,
+        girls: state.girls,
+      }),
+    }))
+
+    return {
+      reward,
+      cost,
+      net: reward - cost,
+    }
+  },
+
   finishWorkWithOutcome: (reward, cost = 0) => settleCurrentWork(reward, cost),
+
+  cancelWork: () => {
+    const state = get()
+    if (!state.player.currentJob) return
+
+    set((current) => ({
+      player: {
+        ...current.player,
+        timeStatus: 'idle',
+        currentJob: undefined,
+      },
+      gameTime: current.gameTime,
+      ...computeDerivedState({
+        player: {
+          ...current.player,
+          timeStatus: 'idle',
+          currentJob: undefined,
+        },
+        girls: current.girls,
+      }),
+    }))
+  },
 
   isPlayerBusy: () => get().player.timeStatus === 'working',
 
@@ -361,15 +608,17 @@ export const useGameStore = create<GameStore>((set, get) => {
   sendMessage: async (girlId, text) => {
     const content = text.trim()
     if (!content) return { ok: false, error: uiStrings.errors.emptyMessage }
-    if (get().isPlayerBusy()) return { ok: false, error: uiStrings.errors.busyCantReply }
 
     const currentState = get()
     const girl = currentState.girls[girlId]
+    const sendTimeCost = 12
 
     if (!girl) return { ok: false, error: uiStrings.errors.girlNotFound }
     if (girl.status === 'blocked') return { ok: false, error: t(uiStrings.errors.girlBlocked, { name: girl.profile.name }) }
 
-    const playerMessage = createMessage('player', content)
+    const playerMessageTime = addGameMinutes(currentState.gameTime, sendTimeCost)
+    const routineStatus = getGirlRoutineStatus(girlId, playerMessageTime)
+    const playerMessage = createMessage('player', content, undefined, playerMessageTime)
     const optimisticGirl = {
       ...girl,
       chatHistory: [...girl.chatHistory, playerMessage],
@@ -377,55 +626,71 @@ export const useGameStore = create<GameStore>((set, get) => {
     }
 
     set((state) => ({
+      player: {
+        ...state.player,
+        currentJob: applyWorkInterruption(
+          state.player.currentJob,
+          sendTimeCost,
+          getWorkActionFocusLoss('message'),
+        ),
+      },
       girls: {
         ...state.girls,
         [girlId]: optimisticGirl,
       },
-      gameTime: playerMessage.timestamp,
+      gameTime: playerMessageTime,
     }))
 
+    const replyRequestStartedAt = Date.now()
     const aiPayload = await generateChatReply({
       girlId,
       girl: optimisticGirl,
       recentHistory: optimisticGirl.chatHistory.slice(-20),
       playerMessage: content,
+      gameTime: playerMessageTime,
     })
+    const replyTime = addGameMinutes(playerMessageTime, routineStatus.replyDelayMinutes)
 
-    set((state) => {
-      const latestGirl = state.girls[girlId]
-      if (!latestGirl) return state
+    await deliverGirlReplySequence(
+      girlId,
+      aiPayload.reply,
+      replyRequestStartedAt,
+      replyTime,
+        (latestGirl, lastReplyMessage, historyWithReply) => {
+        const nextAffection = clampAffection(latestGirl.affection + aiPayload.affectionChange)
+        const nextMood = aiPayload.mood
+        const nextStatus = resolveGirlStatus(nextAffection, nextMood)
+        const nextHistory = appendBlockNotice(
+          historyWithReply,
+          latestGirl.profile.name,
+          latestGirl.status,
+          nextStatus,
+        )
 
-      const replyMessage = createMessage('girl', aiPayload.reply)
-      const nextAffection = clampAffection(latestGirl.affection + aiPayload.affectionChange)
-      const nextMood = aiPayload.mood
-      const nextStatus = resolveGirlStatus(nextAffection, nextMood)
-      const nextHistory = appendBlockNotice(
-        [...latestGirl.chatHistory, replyMessage],
-        latestGirl.profile.name,
-        latestGirl.status,
-        nextStatus,
-      )
-
-      const nextGirls = {
-        ...state.girls,
-        [girlId]: {
+        return {
           ...latestGirl,
           affection: nextAffection,
           mood: nextMood,
           status: nextStatus,
           chatHistory: nextHistory,
-          lastContactTime: replyMessage.timestamp,
+          lastContactTime: lastReplyMessage.timestamp,
           lastReplySource: aiPayload.source,
           lastReplyDebugReason: aiPayload.debugReason,
-        },
+        }
+      },
+    )
+
+    set((state) => {
+      const nextPlayer = {
+        ...state.player,
+        currentJob: applyWorkInterruption(state.player.currentJob, routineStatus.replyDelayMinutes),
       }
 
       return {
-        girls: nextGirls,
-        gameTime: replyMessage.timestamp,
+        player: nextPlayer,
         ...computeDerivedState({
-          player: state.player,
-          girls: nextGirls,
+          player: nextPlayer,
+          girls: state.girls,
         }),
       }
     })
@@ -434,19 +699,21 @@ export const useGameStore = create<GameStore>((set, get) => {
   },
 
   sendGiftInChat: async (girlId, giftId) => {
-    if (get().isPlayerBusy()) return { ok: false, error: uiStrings.errors.busyCantGift }
-
     const girl = get().girls[girlId]
     if (!girl) return { ok: false, error: uiStrings.errors.girlNotFound }
     if (girl.status === 'blocked') return { ok: false, error: t(uiStrings.errors.girlBlocked, { name: girl.profile.name }) }
 
     const gift = get().useGift(giftId)
     if (!gift) return { ok: false, error: uiStrings.errors.noGiftInBag }
+    const giftTimeCost = getGiftSendTimeCost(giftId)
+    const giftMessageTime = addGameMinutes(get().gameTime, giftTimeCost)
+    const routineStatus = getGirlRoutineStatus(girlId, giftMessageTime)
 
     const giftMessage = createMessage(
       'player',
       `[你送出了一个 ${gift.emoji}${gift.name}]`,
       gift.id,
+      giftMessageTime,
     )
 
     set((state) => {
@@ -454,6 +721,14 @@ export const useGameStore = create<GameStore>((set, get) => {
       if (!latestGirl) return state
 
       return {
+        player: {
+          ...state.player,
+          currentJob: applyWorkInterruption(
+            state.player.currentJob,
+            giftTimeCost,
+            getWorkActionFocusLoss('gift'),
+          ),
+        },
         girls: {
           ...state.girls,
           [girlId]: {
@@ -462,61 +737,69 @@ export const useGameStore = create<GameStore>((set, get) => {
             lastContactTime: giftMessage.timestamp,
           },
         },
-        gameTime: giftMessage.timestamp,
+        gameTime: giftMessageTime,
       }
     })
 
     const stateAfterGift = get()
     const updatedGirl = stateAfterGift.girls[girlId]
     const bonus = getGiftPreferenceDelta(girlId, gift)
+    const replyRequestStartedAt = Date.now()
     const aiPayload = await generateChatReply({
       girlId,
       girl: updatedGirl,
       recentHistory: updatedGirl.chatHistory.slice(-20),
+      gameTime: giftMessageTime,
       playerMessage: `我给你准备了一个${gift.name}。`,
       extraContext: `对方刚给你送了一个${gift.name}，价值${gift.price}元。${getGirlReaction(
         girlId,
         gift,
       )}`,
     })
+    const replyTime = addGameMinutes(giftMessageTime, routineStatus.replyDelayMinutes)
 
-    set((state) => {
-      const latestGirl = state.girls[girlId]
-      if (!latestGirl) return state
+    await deliverGirlReplySequence(
+      girlId,
+      aiPayload.reply,
+      replyRequestStartedAt,
+      replyTime,
+        (latestGirl, lastReplyMessage, historyWithReply) => {
+        const nextAffection = clampAffection(
+          latestGirl.affection + aiPayload.affectionChange + bonus,
+        )
+        const nextMood = aiPayload.mood
+        const nextStatus = resolveGirlStatus(nextAffection, nextMood)
+        const nextHistory = appendBlockNotice(
+          historyWithReply,
+          latestGirl.profile.name,
+          latestGirl.status,
+          nextStatus,
+        )
 
-      const replyMessage = createMessage('girl', aiPayload.reply)
-      const nextAffection = clampAffection(
-        latestGirl.affection + aiPayload.affectionChange + bonus,
-      )
-      const nextMood = aiPayload.mood
-      const nextStatus = resolveGirlStatus(nextAffection, nextMood)
-      const nextHistory = appendBlockNotice(
-        [...latestGirl.chatHistory, replyMessage],
-        latestGirl.profile.name,
-        latestGirl.status,
-        nextStatus,
-      )
-
-      const nextGirls = {
-        ...state.girls,
-        [girlId]: {
+        return {
           ...latestGirl,
           affection: nextAffection,
           mood: nextMood,
           status: nextStatus,
           chatHistory: nextHistory,
-          lastContactTime: replyMessage.timestamp,
+          lastContactTime: lastReplyMessage.timestamp,
           lastReplySource: aiPayload.source,
           lastReplyDebugReason: aiPayload.debugReason,
-        },
+        }
+      },
+    )
+
+    set((state) => {
+      const nextPlayer = {
+        ...state.player,
+        currentJob: applyWorkInterruption(state.player.currentJob, routineStatus.replyDelayMinutes),
       }
 
       return {
-        girls: nextGirls,
-        gameTime: replyMessage.timestamp,
+        player: nextPlayer,
         ...computeDerivedState({
-          player: state.player,
-          girls: nextGirls,
+          player: nextPlayer,
+          girls: state.girls,
         }),
       }
     })

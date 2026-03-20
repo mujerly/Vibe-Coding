@@ -1,20 +1,22 @@
-import type { GirlState, Message } from '../../store/gameTypes'
-import { getRelationshipStage } from './affectionLogic'
 import { girlConfigs, metaPrompt } from '../../data'
+import type { GirlState, Message } from '../../store/gameTypes'
+import { formatGirlMessageForPrompt, getGirlStickerPack } from '../chat/stickerProtocol'
+import { getRelationshipStage } from './affectionLogic'
+import { formatGameClock, formatGameDayLabel, getGirlRoutineStatus } from '../../utils/timeSystem'
 
 interface PromptContext {
   girl: GirlState
   recentHistory: Message[]
+  gameTime: number
   extraContext?: string
 }
 
 /**
- * 4-Layer Prompt Architecture:
- *
- * Layer 1 (meta.txt)     → Fixed AI behavior rules + output format
- * Layer 2 (persona)      → Who she is, how she talks, red lines, soft spots
- * Layer 3 (stage script) → Current stage: mindset, reply style, examples
- * Layer 4 (runtime)      → Auto-generated: affection, mood, chat history, events
+ * 4-layer prompt assembly:
+ * 1. Global behavior rules from meta.txt
+ * 2. Stable persona from girl config
+ * 3. Stage-specific behavior script
+ * 4. Runtime chat context and recent history
  */
 export const getSystemPrompt = (girlId: string, context: PromptContext) => {
   const girl = girlConfigs[girlId]
@@ -22,69 +24,84 @@ export const getSystemPrompt = (girlId: string, context: PromptContext) => {
 
   const stage = getRelationshipStage(context.girl.affection)
   const stageScript = girl.prompt.stages[stage]
+  const stickerPack = getGirlStickerPack(girlId)
+  const routine = getGirlRoutineStatus(girlId, context.gameTime)
 
-  // ── Layer 1: Meta Instructions ──
-  const metaBlock = metaPrompt
-
-  // ── Layer 2: Persona Card ──
-  const personaLines = [
-    `## 你的人设`,
+  const personaBlock = [
+    '## 你的人设',
     girl.prompt.persona,
-    ``,
+    '',
     `说话风格：${girl.speakingStyle}`,
-    `你在意的话题：${girl.interests.join('、')}`,
-    `雷区（绝对不能触碰）：${girl.prompt.redLines.join('、')}`,
-    `软肋（容易被打动）：${girl.prompt.softSpots.join('、')}`,
-  ]
-  const personaBlock = personaLines.join('\n')
+    `在意的话题：${girl.interests.join('、')}`,
+    `雷区：${girl.prompt.redLines.join('、')}`,
+    `软肋：${girl.prompt.softSpots.join('、')}`,
+  ].join('\n')
 
-  // ── Layer 3: Stage Script ──
-  let stageBlock = ''
-  if (stageScript) {
-    const stageLines = [
-      `## 当前阶段：${stage}`,
-      `你的心理状态：${stageScript.mindset}`,
-      `回复特点：${stageScript.replyStyle}`,
-      `主动行为：${stageScript.initiatives}`,
-      ``,
-      `这个阶段的典型回复示范：`,
-      ...stageScript.exampleReplies.map((r) => `- "${r}"`),
-    ]
-    stageBlock = stageLines.join('\n')
-  }
+  const stageBlock = stageScript
+    ? [
+        `## 当前阶段：${stage}`,
+        `心理状态：${stageScript.mindset}`,
+        `回复特点：${stageScript.replyStyle}`,
+        `主动行为：${stageScript.initiatives}`,
+        '',
+        '这个阶段的典型回复：',
+        ...stageScript.exampleReplies.map((reply) => `- ${reply}`),
+      ].join('\n')
+    : ''
 
-  // ── Few-shot Examples ──
-  let examplesBlock = ''
-  if (girl.prompt.examples.length > 0) {
-    const lines = [
-      `## 对话示范（模仿这些回复的语气和风格）`,
-      ...girl.prompt.examples.map((e) => `男生：${e.player}\n你：${e.girl}`),
-    ]
-    examplesBlock = lines.join('\n\n')
-  }
+  const stickerBlock =
+    stickerPack && stickerPack.stickers.length > 0
+      ? [
+          '## 你的专属表情包',
+          '你只能使用当前这位角色自己的表情包，不能借用其他人的表情包',
+          '如果要发表情包，必须把某个片段单独写成 [sticker:sticker-id]',
+          '可以只发表情包，例如：[sticker:peek-star]',
+          '也可以先说一句话，再单独发表情包，例如：有点想你///[sticker:moon-miss]',
+          '不要把文字和 [sticker:...] 写在同一个片段里',
+          '表情包只用来补情绪，不要每条都发',
+          '',
+          '可用表情包：',
+          ...stickerPack.stickers.map(
+            (sticker) =>
+              `- [sticker:${sticker.id}] -> ${sticker.asset}；关键词：${sticker.keywords.join(' / ')}`,
+          ),
+          '',
+          '语义映射建议：',
+          ...stickerPack.semanticMap.map(
+            (mapping) =>
+              `- ${mapping.intent} -> [sticker:${mapping.stickerId}]；触发词：${mapping.triggerPhrases.join(' / ')}`,
+          ),
+        ].join('\n')
+      : ''
 
-  // ── Layer 4: Runtime Context ──
+  const examplesBlock =
+    girl.prompt.examples.length > 0
+      ? [
+          '## 对话示范',
+          ...girl.prompt.examples.map(
+            (example) => `男生：${example.player}\n你：${example.girl}`,
+          ),
+        ].join('\n\n')
+      : ''
+
   const recentTopics = context.recentHistory
     .slice(-8)
-    .map((message) => `${message.role === 'player' ? '男生' : '你'}：${message.content}`)
+    .map((message) => formatGirlMessageForPrompt(girlId, message))
     .join('\n')
 
-  const runtimeLines = [
-    `## 当前状态`,
+  const runtimeBlock = [
+    '## 当前状态',
     `好感度：${context.girl.affection}/100（${stage}）`,
-    `你现在的情绪：${context.girl.mood}`,
-    ``,
-    `最近聊天记录：`,
-    recentTopics || '你们刚加上微信，还没聊太多。',
-  ]
+    `当前情绪：${context.girl.mood}`,
+    `当前时间：${formatGameDayLabel(context.gameTime)} ${formatGameClock(context.gameTime)}`,
+    `作息状态：${routine.label}（${routine.description}）`,
+    '',
+    '最近聊天记录：',
+    recentTopics || '你们刚加上微信，还没开始聊天',
+    ...(context.extraContext ? ['', `刚刚发生的事：${context.extraContext}`] : []),
+  ].join('\n')
 
-  if (context.extraContext) {
-    runtimeLines.push(``, `刚刚发生的事：${context.extraContext}`)
-  }
-
-  const runtimeBlock = runtimeLines.join('\n')
-
-  // ── Assemble ──
-  const sections = [metaBlock, personaBlock, stageBlock, examplesBlock, runtimeBlock].filter(Boolean)
-  return sections.join('\n\n---\n\n')
+  return [metaPrompt, personaBlock, stageBlock, stickerBlock, examplesBlock, runtimeBlock]
+    .filter(Boolean)
+    .join('\n\n---\n\n')
 }

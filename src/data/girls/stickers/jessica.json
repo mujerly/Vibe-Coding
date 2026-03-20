@@ -1,0 +1,116 @@
+{
+  "stickers": [
+    {
+      "id": "cool-look",
+      "asset": "🕶️",
+      "keywords": ["审视", "冷淡", "观察", "打量"]
+    },
+    {
+      "id": "approved",
+      "asset": "✅",
+      "keywords": ["认可", "通过", "满意", "还行"]
+    },
+    {
+      "id": "shopping-mood",
+      "asset": "🛍️",
+      "keywords": ["约会", "购物", "精致", "出门"]
+    },
+    {
+      "id": "eye-roll",
+      "asset": "🙄",
+      "keywords": ["无语", "嫌弃", "套路", "low"]
+    },
+    {
+      "id": "busy-meeting",
+      "asset": "📈",
+      "keywords": ["开会", "工作", "忙", "效率"]
+    },
+    {
+      "id": "soft-care",
+      "asset": "🤍",
+      "keywords": ["关心", "照顾", "提醒", "嘴硬"]
+    },
+    {
+      "id": "coffee-time",
+      "asset": "☕",
+      "keywords": ["咖啡", "提神", "早C晚A", "加班"]
+    },
+    {
+      "id": "watch-time",
+      "asset": "⌚",
+      "keywords": ["迟到", "时间", "效率", "等你"]
+    },
+    {
+      "id": "wine-glass",
+      "asset": "🍷",
+      "keywords": ["放松", "下班", "品味", "微醺"]
+    },
+    {
+      "id": "face-palm",
+      "asset": "🤦‍♀️",
+      "keywords": ["无语", "头疼", "幼稚", "心累"]
+    },
+    {
+      "id": "lipstick-kiss",
+      "asset": "💄",
+      "keywords": ["约会", "打扮", "心动", "奖励"]
+    }
+  ],
+  "semanticMap": [
+    {
+      "intent": "审视观察",
+      "stickerId": "cool-look",
+      "triggerPhrases": ["然后呢", "说重点", "我在看", "继续"]
+    },
+    {
+      "intent": "明确认可",
+      "stickerId": "approved",
+      "triggerPhrases": ["不错", "可以", "有眼光", "通过"]
+    },
+    {
+      "intent": "约会消费",
+      "stickerId": "shopping-mood",
+      "triggerPhrases": ["周末", "逛街", "餐厅", "见面"]
+    },
+    {
+      "intent": "嫌弃无语",
+      "stickerId": "eye-roll",
+      "triggerPhrases": ["就这", "太油", "low", "模板"]
+    },
+    {
+      "intent": "工作忙碌",
+      "stickerId": "busy-meeting",
+      "triggerPhrases": ["meeting", "deadline", "开会", "忙"]
+    },
+    {
+      "intent": "克制关心",
+      "stickerId": "soft-care",
+      "triggerPhrases": ["别太累", "休息", "记得吃饭", "照顾好自己"]
+    },
+    {
+      "intent": "疲惫提神",
+      "stickerId": "coffee-time",
+      "triggerPhrases": ["困", "喝杯咖啡", "续命", "早"]
+    },
+    {
+      "intent": "时间观念",
+      "stickerId": "watch-time",
+      "triggerPhrases": ["迟到", "几点", "效率", "别让我等"]
+    },
+    {
+      "intent": "下班放松",
+      "stickerId": "wine-glass",
+      "triggerPhrases": ["下班", "喝一杯", "微醺", "放松一下"]
+    },
+    {
+      "intent": "极度心累",
+      "stickerId": "face-palm",
+      "triggerPhrases": ["头疼", "幼稚", "无语", "什么鬼"]
+    },
+    {
+      "intent": "精心打扮",
+      "stickerId": "lipstick-kiss",
+      "triggerPhrases": ["化妆", "出门了", "好看吗", "准备好"]
+    }
+  ]
+}

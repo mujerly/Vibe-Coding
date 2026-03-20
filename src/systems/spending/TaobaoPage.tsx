@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { uiStrings } from '../../data'
 import { useGameStore } from '../../store/gameStore'
 import { EarningPage } from '../earning/EarningPage'
@@ -10,12 +10,8 @@ export function TaobaoPage() {
   const currentJobType = useGameStore((state) => state.player.currentJob?.type)
   const s = uiStrings.taobao
   const [section, setSection] = useState<TaobaoSection>('shop')
-
-  useEffect(() => {
-    if (currentJobType === 'taobao-review') {
-      setSection('review')
-    }
-  }, [currentJobType])
+  const activeSection: TaobaoSection =
+    currentJobType === 'taobao-review' ? 'review' : section
 
   return (
     <div className="flex h-full flex-col">
@@ -25,7 +21,7 @@ export function TaobaoPage() {
             type="button"
             onClick={() => setSection('shop')}
             className={`rounded-[18px] px-3 py-2 text-sm font-semibold transition ${
-              section === 'shop' ? 'bg-white text-ink shadow-soft' : 'text-wine/60'
+              activeSection === 'shop' ? 'bg-white text-ink shadow-soft' : 'text-wine/60'
             }`}
           >
             {s.shopTab}
@@ -34,7 +30,7 @@ export function TaobaoPage() {
             type="button"
             onClick={() => setSection('review')}
             className={`rounded-[18px] px-3 py-2 text-sm font-semibold transition ${
-              section === 'review' ? 'bg-white text-ink shadow-soft' : 'text-wine/60'
+              activeSection === 'review' ? 'bg-white text-ink shadow-soft' : 'text-wine/60'
             }`}
           >
             {s.reviewTab}
@@ -43,7 +39,7 @@ export function TaobaoPage() {
       </div>
 
       <div className="min-h-0 flex-1">
-        {section === 'shop' ? (
+        {activeSection === 'shop' ? (
           <ShopPage
             pageLabel="淘宝"
             pageTitle={s.shopTitle}

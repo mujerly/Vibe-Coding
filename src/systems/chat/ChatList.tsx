@@ -1,7 +1,9 @@
+import { motion } from 'framer-motion'
 import { getRelationshipStage } from '../girls/affectionLogic'
 import type { GirlState } from '../../store/gameTypes'
 import { Avatar } from '../../components/Avatar'
 import { uiStrings } from '../../data'
+import { getGirlStickerById } from './stickerProtocol'
 
 interface ChatListProps {
   girls: Record<string, GirlState>
@@ -31,65 +33,82 @@ export function ChatList({ girls, onOpen }: ChatListProps) {
   })
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-white/60 px-5 pb-4 pt-5">
-        <p className="text-xs uppercase tracking-[0.3em] text-wine/45">{s.topLabel}</p>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex h-full flex-col"
+    >
+      <div className="border-b border-black/5 bg-white/40 px-6 pb-5 pt-6 backdrop-blur-md">
+        <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-wine/50">{s.topLabel}</p>
         <div className="mt-2 flex items-end justify-between">
           <div>
-            <h1 className="font-display text-2xl text-ink">{s.title}</h1>
-            <p className="mt-1 text-sm text-wine/60">{s.subtitle}</p>
+            <h1 className="font-display text-3xl font-bold tracking-tight text-ink">{s.title}</h1>
+            <p className="mt-1.5 text-[13px] font-medium text-wine/60">{s.subtitle}</p>
           </div>
-          <div className="rounded-2xl bg-white/80 px-3 py-2 text-right shadow-soft">
-            <div className="text-[10px] uppercase tracking-[0.24em] text-wine/40">{s.sessionCount}</div>
-            <div className="text-lg font-semibold text-ink">{sortedGirls.length}</div>
+          <div className="rounded-[20px] bg-white/90 px-4 py-3 text-right shadow-sm ring-1 ring-black/5">
+            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-wine/40">{s.sessionCount}</div>
+            <div className="mt-0.5 text-xl font-bold text-ink">{sortedGirls.length}</div>
           </div>
         </div>
       </div>
 
-      <div className="scrollbar-hidden flex-1 overflow-y-auto px-3 pb-4 pt-3">
-        {sortedGirls.map((girl) => {
+      <div className="scrollbar-hidden flex-1 overflow-y-auto px-4 pb-6 pt-4">
+        {sortedGirls.map((girl, index) => {
           const lastMessage = girl.chatHistory[girl.chatHistory.length - 1]
+          const lastSticker = getGirlStickerById(girl.profile.id, lastMessage?.stickerId)
+          const lastPreview = lastSticker ? s.stickerPreview : lastMessage?.content || s.noMessages
 
           return (
-            <button
+            <motion.button
               key={girl.profile.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
               type="button"
               onClick={() => onOpen(girl.profile.id)}
-              className="mb-3 flex w-full items-start gap-3 rounded-[26px] bg-white/85 px-4 py-4 text-left shadow-soft transition hover:-translate-y-0.5 hover:bg-white"
+              className="mb-3.5 flex w-full items-start gap-4 rounded-[24px] bg-white p-4 text-left shadow-sm ring-1 ring-black/5 transition-colors hover:bg-slate-50"
             >
-              <div className="relative">
-                <Avatar avatar={girl.profile.avatar} name={girl.profile.name} size="lg" />
+              <div className="relative shrink-0">
+                <div className="shadow-sm rounded-[22px]">
+                  <Avatar avatar={girl.profile.avatar} name={girl.profile.name} size="lg" />
+                </div>
                 {girl.unreadCount > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -right-1.5 -top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white shadow-md ring-2 ring-white"
+                  >
                     {girl.unreadCount}
-                  </span>
+                  </motion.span>
                 ) : null}
               </div>
 
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 py-1">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h2 className="truncate text-base font-semibold text-ink">{girl.profile.name}</h2>
-                      <span className={`text-sm ${affectionTone(girl.affection)}`}>♥ {girl.affection}</span>
+                    <div className="flex items-center gap-2.5">
+                      <h2 className="truncate text-[16px] font-bold text-ink">{girl.profile.name}</h2>
+                      <span className={`text-[13px] font-bold ${affectionTone(girl.affection)}`}>♥ {girl.affection}</span>
                     </div>
-                    <p className="mt-1 text-xs text-wine/55">
+                    <p className="mt-1 text-[12px] font-medium text-wine/55">
                       {getRelationshipStage(girl.affection)} · {s.statusLabels[girl.status] ?? girl.status}
                     </p>
                   </div>
-                  <span className="shrink-0 text-[11px] text-wine/45">
+                  <span className="shrink-0 text-[11px] font-bold tracking-wider text-wine/40">
                     {lastMessage ? formatTimestamp(lastMessage.timestamp) : '--:--'}
                   </span>
                 </div>
 
-                <p className="mt-3 line-clamp-2 text-sm text-wine/70">
-                  {lastMessage?.content || s.noMessages}
+                <p className="mt-2.5 line-clamp-2 text-[13px] leading-relaxed text-wine/65">
+                  {lastPreview}
                 </p>
               </div>
-            </button>
+            </motion.button>
           )
         })}
       </div>
-    </div>
+    </motion.div>
   )
 }

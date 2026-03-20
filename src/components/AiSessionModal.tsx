@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import {
   defaultOpenAiBaseUrl,
+  getApiKeyValidationError,
   OPENAI_MODEL_PRESETS,
+  sanitizeApiKeyInput,
   useAiConfig,
 } from '../config/api'
 import { uiStrings } from '../data'
@@ -132,13 +134,24 @@ export function AiSessionModal({ open, onClose }: AiSessionModalProps) {
             type="button"
             onClick={async () => {
               if (!apiKey.trim() || loadingModels) return
+              const normalizedApiKey = sanitizeApiKeyInput(apiKey)
+              const validationError = getApiKeyValidationError(normalizedApiKey)
+              setApiKey(normalizedApiKey)
+              if (!normalizedApiKey) {
+                setModelStatus('请输入有效的 API Key。')
+                return
+              }
+              if (validationError) {
+                setModelStatus(validationError)
+                return
+              }
               setLoadingModels(true)
               setModelStatus('')
 
               try {
                 const response = await fetch(`${defaultOpenAiBaseUrl}/models`, {
                   headers: {
-                    Authorization: `Bearer ${apiKey.trim()}`,
+                    Authorization: `Bearer ${normalizedApiKey}`,
                   },
                 })
 
@@ -250,9 +263,15 @@ export function AiSessionModal({ open, onClose }: AiSessionModalProps) {
           <button
             type="button"
             onClick={() => {
-              if (!apiKey.trim()) return
+              const normalizedApiKey = sanitizeApiKeyInput(apiKey)
+              const validationError = getApiKeyValidationError(normalizedApiKey)
+              setApiKey(normalizedApiKey)
+              if (!normalizedApiKey || validationError) {
+                setModelStatus(validationError ?? '请输入有效的 API Key。')
+                return
+              }
               setSession({
-                apiKey,
+                apiKey: normalizedApiKey,
                 model,
               })
               onClose()

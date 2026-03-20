@@ -1,0 +1,116 @@
+{
+  "stickers": [
+    {
+      "id": "palette-think",
+      "asset": "🎨",
+      "keywords": ["思考", "创作", "灵感", "调色"]
+    },
+    {
+      "id": "quiet-peek",
+      "asset": "👀",
+      "keywords": ["偷看", "在意", "观察", "好奇"]
+    },
+    {
+      "id": "soft-smile",
+      "asset": "🙂",
+      "keywords": ["开心", "被理解", "温柔", "轻轻回应"]
+    },
+    {
+      "id": "script-dislike",
+      "asset": "🫠",
+      "keywords": ["反感套路", "尴尬", "降温", "敷衍"]
+    },
+    {
+      "id": "window-night",
+      "asset": "🌃",
+      "keywords": ["夜聊", "走心", "私密", "心事"]
+    },
+    {
+      "id": "spark-note",
+      "asset": "💡",
+      "keywords": ["启发", "灵感来了", "想到", "认真交流"]
+    },
+    {
+      "id": "open-book",
+      "asset": "📖",
+      "keywords": ["看书", "阅读", "文字", "安静"]
+    },
+    {
+      "id": "coffee-rain",
+      "asset": "🌧️",
+      "keywords": ["下雨", "发呆", "天气", "情绪"]
+    },
+    {
+      "id": "movie-clapper",
+      "asset": "🎬",
+      "keywords": ["电影", "观影", "故事", "共鸣"]
+    },
+    {
+      "id": "pen-writing",
+      "asset": "✍️",
+      "keywords": ["记录", "手写", "画画", "草稿"]
+    },
+    {
+      "id": "ear-phones",
+      "asset": "🎧",
+      "keywords": ["听歌", "隔绝", "音乐", "沉浸"]
+    }
+  ],
+  "semanticMap": [
+    {
+      "intent": "创作思考",
+      "stickerId": "palette-think",
+      "triggerPhrases": ["调色", "创作", "卡住", "灵感"]
+    },
+    {
+      "intent": "安静关注",
+      "stickerId": "quiet-peek",
+      "triggerPhrases": ["在吗", "想知道", "看看你", "路过"]
+    },
+    {
+      "intent": "轻轻开心",
+      "stickerId": "soft-smile",
+      "triggerPhrases": ["懂我", "有共鸣", "这句不错", "被理解了"]
+    },
+    {
+      "intent": "拒绝套路",
+      "stickerId": "script-dislike",
+      "triggerPhrases": ["太油", "模板", "网学的", "太熟练了"]
+    },
+    {
+      "intent": "夜晚走心",
+      "stickerId": "window-night",
+      "triggerPhrases": ["睡不着", "晚上", "想聊聊", "突然想你"]
+    },
+    {
+      "intent": "被你点亮",
+      "stickerId": "spark-note",
+      "triggerPhrases": ["有意思", "提醒我了", "想到一点", "被点醒"]
+    },
+    {
+      "intent": "安静阅读",
+      "stickerId": "open-book",
+      "triggerPhrases": ["看书", "文字", "太宰治", "人间失格"]
+    },
+    {
+      "intent": "雨天情绪",
+      "stickerId": "coffee-rain",
+      "triggerPhrases": ["下雨", "发呆", "天气不好", "有点闷"]
+    },
+    {
+      "intent": "电影共鸣",
+      "stickerId": "movie-clapper",
+      "triggerPhrases": ["电影", "镜头", "导演", "画面"]
+    },
+    {
+      "intent": "记录灵感",
+      "stickerId": "pen-writing",
+      "triggerPhrases": ["写下来", "手稿", "画线稿", "记录"]
+    },
+    {
+      "intent": "沉浸音乐",
+      "stickerId": "ear-phones",
+      "triggerPhrases": ["听歌", "单曲循环", "戴上耳机", "不想说话"]
+    }
+  ]
+}

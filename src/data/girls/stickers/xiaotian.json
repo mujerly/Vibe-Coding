@@ -1,0 +1,126 @@
+{
+  "stickers": [
+    {
+      "id": "peek-star",
+      "asset": "🔭",
+      "keywords": ["试探", "查岗", "偷看", "好奇"]
+    },
+    {
+      "id": "hmph-cloud",
+      "asset": "☁️",
+      "keywords": ["嘴硬", "傲娇", "轻哼", "不满"]
+    },
+    {
+      "id": "moon-miss",
+      "asset": "🌙",
+      "keywords": ["想你", "晚安", "陪我", "黏人"]
+    },
+    {
+      "id": "tarot-judge",
+      "asset": "🔮",
+      "keywords": ["怀疑", "审问", "占卜", "判断"]
+    },
+    {
+      "id": "sparkle-happy",
+      "asset": "✨",
+      "keywords": ["开心", "心动", "被夸", "惊喜"]
+    },
+    {
+      "id": "blacklist-warning",
+      "asset": "⛔",
+      "keywords": ["警告", "拉黑", "生气", "越线"]
+    },
+    {
+      "id": "angry-pout",
+      "asset": "😤",
+      "keywords": ["生气", "哼", "不理你", "哄我"]
+    },
+    {
+      "id": "star-eyes",
+      "asset": "🤩",
+      "keywords": ["哇", "喜欢", "惊喜", "想要"]
+    },
+    {
+      "id": "magnifying-glass",
+      "asset": "🔍",
+      "keywords": ["查岗", "盯", "发现", "抓包"]
+    },
+    {
+      "id": "magic-wand",
+      "asset": "🪄",
+      "keywords": ["施法", "变", "奇迹", "转运"]
+    },
+    {
+      "id": "crown-princess",
+      "asset": "👑",
+      "keywords": ["本小姐", "命令", "骄傲", "听我的"]
+    },
+    {
+      "id": "cat-angry",
+      "asset": "😾",
+      "keywords": ["炸毛", "凶", "咬你", "何意味"]
+    }
+  ],
+  "semanticMap": [
+    {
+      "intent": "试探查岗",
+      "stickerId": "peek-star",
+      "triggerPhrases": ["你在干嘛", "去哪了", "怎么不回", "偷偷看你"]
+    },
+    {
+      "intent": "傲娇嘴硬",
+      "stickerId": "hmph-cloud",
+      "triggerPhrases": ["哼", "才没有", "不想理你", "别误会"]
+    },
+    {
+      "intent": "想念晚安",
+      "stickerId": "moon-miss",
+      "triggerPhrases": ["想你", "晚安", "陪我", "想见你"]
+    },
+    {
+      "intent": "占卜审问",
+      "stickerId": "tarot-judge",
+      "triggerPhrases": ["真的假的", "骗我", "解释", "你最好说实话"]
+    },
+    {
+      "intent": "开心心动",
+      "stickerId": "sparkle-happy",
+      "triggerPhrases": ["开心", "喜欢", "收到礼物", "好耶"]
+    },
+    {
+      "intent": "强烈警告",
+      "stickerId": "blacklist-warning",
+      "triggerPhrases": ["拉黑", "太过分", "别骗我", "你完了"]
+    },
+    {
+      "intent": "气鼓鼓",
+      "stickerId": "angry-pout",
+      "triggerPhrases": ["气死我了", "快哄我", "不高兴", "讨厌"]
+    },
+    {
+      "intent": "惊喜星星眼",
+      "stickerId": "star-eyes",
+      "triggerPhrases": ["哇", "太棒了", "好喜欢", "想要这个"]
+    },
+    {
+      "intent": "严格查岗",
+      "stickerId": "magnifying-glass",
+      "triggerPhrases": ["老实交代", "被我抓到了", "盯", "你不对劲"]
+    },
+    {
+      "intent": "水逆退散",
+      "stickerId": "magic-wand",
+      "triggerPhrases": ["转运", "施法", "水逆退散", "给你好运"]
+    },
+    {
+      "intent": "大小姐命令",
+      "stickerId": "crown-princess",
+      "triggerPhrases": ["本小姐", "听我的", "不准拒绝", "必须"]
+    },
+    {
+      "intent": "炸毛发火",
+      "stickerId": "cat-angry",
+      "triggerPhrases": ["何意味", "太逆天了", "我擦", "咬死你"]
+    }
+  ]
+}

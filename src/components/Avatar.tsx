@@ -22,6 +22,9 @@ const isImagePath = (avatar: string) =>
   /^(\/|https?:\/\/|data:image)/.test(avatar) ||
   /\.(png|jpe?g|gif|svg|webp)$/i.test(avatar)
 
+const normalizeImageSrc = (src: string) =>
+  src.startsWith('data:image') ? src : encodeURI(src)
+
 export function Avatar({ avatar, name, size = 'md' }: AvatarProps) {
   const base = `shrink-0 items-center justify-center rounded-2xl overflow-hidden ${sizeClasses[size]}`
 
@@ -29,7 +32,7 @@ export function Avatar({ avatar, name, size = 'md' }: AvatarProps) {
     return (
       <div className={`flex ${base}`}>
         <img
-          src={avatar}
+          src={normalizeImageSrc(avatar)}
           alt={name}
           className="h-full w-full object-cover"
         />

@@ -25,7 +25,7 @@ export function EarningPage({
   const timeStatus = useGameStore((state) => state.player.timeStatus)
   const startWork = useGameStore((state) => state.startWork)
   const finishWork = useGameStore((state) => state.finishWork)
-  const finishWorkWithOutcome = useGameStore((state) => state.finishWorkWithOutcome)
+  const applyWorkOutcome = useGameStore((state) => state.applyWorkOutcome)
   const [now, setNow] = useState(0)
   const [feedback, setFeedback] = useState<string | null>(null)
 
@@ -60,6 +60,7 @@ export function EarningPage({
   const topLabel = pageLabel ?? s.topLabel
   const title = pageTitle ?? (visibleJobs.length === 1 ? visibleJobs[0].name : s.title)
   const subtitle = pageSubtitle ?? (visibleJobs.length === 1 ? visibleJobs[0].description : s.subtitle)
+  const focus = currentJob?.focus ?? 100
 
   const renderFeedback = (paddingClassName: string) => (
     <AnimatePresence>
@@ -80,7 +81,12 @@ export function EarningPage({
 
   const handleInteractiveComplete = () => {
     const reward = finishWork()
-    if (reward <= 0 || !currentJobMeta) return
+    if (!currentJobMeta) return
+
+    if (reward <= 0) {
+      setFeedback(t(s.workFailed, { name: currentJobMeta.name }))
+      return
+    }
 
     confetti({
       particleCount: 100,
@@ -91,8 +97,8 @@ export function EarningPage({
     setFeedback(t(s.manualSettled, { name: currentJobMeta.name, reward }))
   }
 
-  const handleSlotComplete = (result: SlotSpinResult) => {
-    const settlement = finishWorkWithOutcome(result.payout, result.cost)
+  const handleSlotSpin = (result: SlotSpinResult) => {
+    const settlement = applyWorkOutcome(result.payout, result.cost)
     if (!settlement) return
 
     if (result.isJackpot) {
@@ -114,7 +120,7 @@ export function EarningPage({
     if (result.isJackpot) {
       setFeedback(
         t(s.slotJackpotFeedback, {
-          name: result.symbolName ?? currentJobMeta?.name ?? s.slotTitle,
+          name: result.symbolName ?? s.slotTitle,
           reward: result.payout,
           net: settlement.net,
         }),
@@ -125,7 +131,7 @@ export function EarningPage({
     if (result.isWin) {
       setFeedback(
         t(s.slotWinFeedback, {
-          name: result.symbolName ?? currentJobMeta?.name ?? s.slotTitle,
+          name: result.symbolName ?? s.slotTitle,
           reward: result.payout,
           net: settlement.net,
         }),
@@ -134,6 +140,11 @@ export function EarningPage({
     }
 
     setFeedback(t(s.slotLoseFeedback, { cost: result.cost }))
+  }
+
+  const handleSlotExit = () => {
+    finishWork()
+    setFeedback(s.slotExitFeedback)
   }
 
   if (
@@ -204,7 +215,8 @@ export function EarningPage({
         <SlotGame
           key={`${currentJob.type}-${currentJob.startTime}`}
           job={currentJobMeta}
-          onComplete={handleSlotComplete}
+          onSpinComplete={handleSlotSpin}
+          onExit={handleSlotExit}
         />
       </motion.div>
     )
@@ -258,7 +270,7 @@ export function EarningPage({
                       <span>{currentJobMeta.name}</span>
                     </div>
                     <div className="mt-1 text-[13px] font-medium text-wine/60">
-                      {s.estimatedIncome} <span className="text-rose-500">楼{currentJob.reward}</span>
+                      {s.estimatedIncome} <span className="text-rose-500">¥{currentJob.reward}</span>
                     </div>
                   </div>
                   <div className="rounded-full bg-amber-100/80 px-3.5 py-1.5 text-xs font-bold text-amber-700 shadow-sm">
@@ -273,6 +285,26 @@ export function EarningPage({
                     animate={{ width: `${progress * 100}%` }}
                     transition={{ ease: 'linear', duration: 1 }}
                   />
+                </div>
+                <div className="mt-4">
+                  <div className="mb-2 flex items-center justify-between text-[12px] font-semibold text-wine/60">
+                    <span>{s.focusLabel}</span>
+                    <span>{focus}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <motion.div
+                      className={`h-full rounded-full ${
+                        focus > 60
+                          ? 'bg-emerald-400'
+                          : focus > 30
+                            ? 'bg-amber-400'
+                            : 'bg-rose-400'
+                      }`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${focus}%` }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  </div>
                 </div>
                 <p className="mt-4 text-[13px] font-medium text-wine/65">{s.workingWarning}</p>
               </>
@@ -333,8 +365,8 @@ export function EarningPage({
                   {job.cost != null
                     ? `¥${job.cost}/次`
                     : job.rewardRange
-                      ? `楼${job.rewardRange[0]}-${job.rewardRange[1]}`
-                      : `楼${job.reward}`}
+                      ? `¥${job.rewardRange[0]}-${job.rewardRange[1]}`
+                      : `¥${job.reward}`}
                 </div>
                 <div className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-wine/50">
                   {job.cost != null
@@ -342,7 +374,7 @@ export function EarningPage({
                         min: job.rewardRange?.[0] ?? job.reward,
                         max: job.rewardRange?.[1] ?? job.reward,
                       })
-                    : `${job.duration} ${s.timeUnit}`}
+                    : `${s.timeCostLabel} ${job.timeCostMinutes} 分钟`}
                 </div>
               </div>
             </div>

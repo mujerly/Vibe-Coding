@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { JobDefinition } from '../../store/gameTypes'
 import { t, uiStrings } from '../../data'
@@ -24,10 +24,7 @@ export function ReviewGame({ job, reward, onComplete }: ReviewGameProps) {
 
   const allMax = categories.every((category) => ratings[category] === 5)
 
-  useEffect(() => {
-    if (!allMax || comment.trim()) return
-    setComment(s.reviewDefaultComment)
-  }, [allMax, comment, s.reviewDefaultComment])
+  const effectiveComment = comment || (allMax ? s.reviewDefaultComment : '')
 
   const rows: Array<{ key: ReviewCategory; label: string }> = [
     { key: 'match', label: s.reviewCategoryMatch },
@@ -94,7 +91,7 @@ export function ReviewGame({ job, reward, onComplete }: ReviewGameProps) {
 
         <label className="mt-6 block text-[13px] font-bold uppercase tracking-wider text-wine/60">{s.reviewCommentLabel}</label>
         <textarea
-          value={comment}
+          value={effectiveComment}
           onChange={(event) => setComment(event.target.value)}
           placeholder={s.reviewCommentPlaceholder}
           className="mt-3 h-32 w-full resize-none rounded-[20px] bg-slate-50 px-5 py-4 text-sm font-medium leading-relaxed text-ink shadow-inner outline-none transition-all placeholder:text-wine/30 focus:bg-white focus:ring-2 focus:ring-[#ffb25b]/50"

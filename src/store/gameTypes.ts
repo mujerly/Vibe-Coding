@@ -12,6 +12,7 @@ export interface Message {
   content: string
   timestamp: number
   giftId?: string
+  stickerId?: string
 }
 
 export interface GirlProfile {
@@ -41,6 +42,7 @@ export interface JobDefinition {
   name: string
   emoji: string
   duration: number
+  timeCostMinutes: number
   reward: number
   description: string
   rewardRange?: [number, number]
@@ -52,10 +54,18 @@ export interface JobDefinition {
 export interface CurrentJob {
   type: string
   duration: number
+  timeCostMinutes: number
   reward: number
   startTime: number
   mode: 'timed' | 'delivery' | 'review' | 'slot'
   completionMode: 'timer' | 'manual'
+  trackedDuration: number
+  trackedTimeMinutes: number
+  interruptionMinutes: number
+  sessionSpent: number
+  sessionEarned: number
+  spinCount: number
+  focus: number
 }
 
 export interface WorkSettlement {

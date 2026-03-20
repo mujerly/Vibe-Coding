@@ -49,14 +49,14 @@ export const getGirlReaction = (girlId: string, gift: Gift) => {
 
 export const getDelayedReplyPenalty = (
   girlId: string,
-  durationSeconds: number,
+  durationMinutes: number,
   affection: number,
 ) => {
   const girl = girlConfigs[girlId]
   if (!girl) return 0
 
   const { delayPenalty } = balance
-  const timePenalty = Math.max(1, Math.floor(durationSeconds / delayPenalty.secondsPerTick))
+  const timePenalty = Math.max(1, Math.floor(durationMinutes / delayPenalty.minutesPerTick))
   const affectionPressure = affection >= delayPenalty.highAffectionThreshold ? delayPenalty.highAffectionExtra : 0
 
   return Math.ceil((timePenalty + affectionPressure) * girl.anxiousWaitMultiplier)

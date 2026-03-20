@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { AiSessionModal } from './components/AiSessionModal'
+import { Avatar } from './components/Avatar'
 import { useAiConfig } from './config/api'
 import { AppDock } from './components/AppDock'
 import { HomeBar } from './components/HomeBar'
@@ -77,8 +78,8 @@ function StatsView({ girls }: { girls: Record<string, GirlState> }) {
               >
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-rose-50 text-2xl shadow-sm transition-transform group-hover:scale-110">
-                      {girl.profile.avatar}
+                    <div className="transition-transform group-hover:scale-110">
+                      <Avatar avatar={girl.profile.avatar} name={girl.profile.name} size="md" />
                     </div>
                     <div>
                       <div className="text-[15px] font-bold text-ink">{girl.profile.name}</div>
@@ -129,6 +130,7 @@ function App() {
   const aiConfig = useAiConfig()
   const girls = useGameStore((state) => state.girls)
   const player = useGameStore((state) => state.player)
+  const gameTime = useGameStore((state) => state.gameTime)
   const score = useGameStore((state) => state.score)
   const gameOver = useGameStore((state) => state.gameOver)
   const gameOverReason = useGameStore((state) => state.gameOverReason)
@@ -180,9 +182,12 @@ function App() {
 
       if (Date.now() >= currentJob.startTime + currentJob.duration * 1000) {
         const reward = finishWork()
-        if (reward > 0) {
-          setSettlementMessage(t(sa.settlementMessage, { reward }))
-        }
+        const jobMeta = jobConfigs.find((job) => job.id === currentJob.type)
+        setSettlementMessage(
+          reward > 0
+            ? t(sa.settlementMessage, { reward })
+            : t(uiStrings.earning.workFailed, { name: jobMeta?.name ?? '这单工作' }),
+        )
       }
     }, 1000)
 
@@ -396,6 +401,7 @@ function App() {
         <section className="w-full flex-1">
           <PhoneFrame
             footer={footer}
+            gameTime={gameTime}
             money={player.money}
             timeStatus={player.timeStatus}
           >

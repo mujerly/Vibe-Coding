@@ -8,6 +8,7 @@ import metaPromptText from './prompts/meta.txt?raw'
 
 import type {
   GirlConfig,
+  GirlStickerPackConfig,
   GiftConfig,
   BalanceConfig,
   PhoneAppConfig,
@@ -24,9 +25,38 @@ import type { JobDefinition } from '../store/gameTypes'
  * all JSON files at build time.
  */
 const girlModules = import.meta.glob<GirlConfig>('./girls/*.json', { eager: true, import: 'default' })
+const stickerPackModules = import.meta.glob<GirlStickerPackConfig>('./girls/stickers/*.json', {
+  eager: true,
+  import: 'default',
+})
+
+const isGirlConfig = (value: unknown): value is GirlConfig => {
+  if (!value || typeof value !== 'object') return false
+
+  const candidate = value as Partial<GirlConfig>
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.name === 'string' &&
+    typeof candidate.avatar === 'string' &&
+    typeof candidate.intro === 'string' &&
+    candidate.prompt != null &&
+    candidate.fallback != null
+  )
+}
 
 export const girlConfigs: Record<string, GirlConfig> = Object.fromEntries(
-  Object.values(girlModules).map((girl) => [girl.id, girl]),
+  Object.values(girlModules)
+    .filter(isGirlConfig)
+    .map((girl) => [girl.id, girl]),
+)
+
+export const girlStickerPacks: Record<string, GirlStickerPackConfig> = Object.fromEntries(
+  Object.entries(stickerPackModules)
+    .map(([path, pack]) => {
+      const match = path.match(/\.\/girls\/stickers\/(.+)\.json$/)
+      return match ? [match[1], pack] : null
+    })
+    .filter((entry): entry is [string, GirlStickerPackConfig] => entry != null),
 )
 
 export const giftConfigs: GiftConfig[] = giftsData as GiftConfig[]

@@ -1,4 +1,4 @@
-import { getAiConfig, isAiEnabled } from '../../config/api'
+import { getAiConfig, getApiKeyValidationError, isAiEnabled } from '../../config/api'
 import { girlConfigs } from '../../data'
 import type { GirlState, Message } from '../../store/gameTypes'
 import { getRelationshipStage } from '../girls/affectionLogic'
@@ -9,6 +9,7 @@ interface ChatRequestContext {
   girl: GirlState
   recentHistory: Message[]
   playerMessage: string
+  gameTime: number
   extraContext?: string
 }
 
@@ -204,6 +205,11 @@ const buildLocalFallbackReply = (
 
 const requestAiReply = async (context: ChatRequestContext) => {
   const aiConfig = getAiConfig()
+  const apiKeyValidationError = getApiKeyValidationError(aiConfig.apiKey)
+  if (apiKeyValidationError) {
+    throw new Error(apiKeyValidationError)
+  }
+
   const response = await fetch(`${aiConfig.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -213,13 +219,14 @@ const requestAiReply = async (context: ChatRequestContext) => {
     body: JSON.stringify({
       model: aiConfig.model,
       temperature: 0.8,
-      max_tokens: 400,
+      max_completion_tokens: 400,
       messages: [
         {
           role: 'system',
           content: getSystemPrompt(context.girlId, {
             girl: context.girl,
             recentHistory: context.recentHistory,
+            gameTime: context.gameTime,
             extraContext: context.extraContext,
           }),
         },
