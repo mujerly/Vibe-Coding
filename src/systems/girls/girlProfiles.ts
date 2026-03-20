@@ -1,7 +1,7 @@
 import type { GirlProfile, GirlState } from '../../store/gameTypes'
 import { girlConfigs, balance } from '../../data'
 import type { GirlConfig } from '../../data/types'
-import { addGameMinutes, createInitialGameTime } from '../../utils/timeSystem'
+import { createInitialGameTime } from '../../utils/timeSystem'
 
 export type { GirlConfig }
 
@@ -44,6 +44,8 @@ export const createInitialGirlsState = (
         : [],
       unreadCount: girl.intro ? 1 : 0,
       lastContactTime: timestamp,
+      pendingCheckInReply: false,
+      lastCheckInTemplate: undefined,
       lastReplySource: undefined,
       lastReplyDebugReason: undefined,
     }

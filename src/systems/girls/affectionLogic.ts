@@ -1,7 +1,36 @@
-import type { Gift } from '../../store/gameTypes'
+import type { Gift, Message } from '../../store/gameTypes'
 import { girlConfigs, balance } from '../../data'
 
 export const clampAffection = (value: number) => Math.max(0, Math.min(100, value))
+
+const noInitiativePatterns = [
+  /绝对不主动/,
+  /完全不主动/,
+  /基本不主动/,
+  /不会主动/,
+  /不主动找你/,
+  /不主动/,
+]
+
+const reactiveOnlyPatterns = [
+  /在你发消息后/,
+  /在你问/,
+  /跟进一个问题/,
+  /不主动找你开话头/,
+]
+
+const proactiveCheckInPatterns = [
+  /主动/,
+  /先发消息/,
+  /找你/,
+  /追问/,
+  /查岗/,
+  /关心/,
+  /分享/,
+]
+
+const normalizeDirectiveText = (value: string) => value.replace(/\s+/g, '')
+const normalizeTemplateText = (value: string) => value.trim()
 
 export const getRelationshipStage = (affection: number) => {
   const tiers = balance.affectionTiers
@@ -62,10 +91,56 @@ export const getDelayedReplyPenalty = (
   return Math.ceil((timePenalty + affectionPressure) * girl.anxiousWaitMultiplier)
 }
 
-export const getWorkComplaintMessage = (girlId: string) => {
+export const canGirlSendCheckIn = (girlId: string, affection: number) => {
+  const girl = girlConfigs[girlId]
+  if (!girl || girl.checkInTemplates.length === 0) return false
+
+  const stage = getRelationshipStage(affection)
+  const initiatives = normalizeDirectiveText(girl.prompt.stages[stage]?.initiatives ?? '')
+  if (!initiatives) return false
+
+  if (noInitiativePatterns.some((pattern) => pattern.test(initiatives))) {
+    return false
+  }
+
+  if (reactiveOnlyPatterns.some((pattern) => pattern.test(initiatives))) {
+    return false
+  }
+
+  return proactiveCheckInPatterns.some((pattern) => pattern.test(initiatives))
+}
+
+export const getWorkComplaintMessage = (
+  girlId: string,
+  chatHistory: Message[] = [],
+  lastTemplate?: string,
+) => {
   const girl = girlConfigs[girlId]
   if (!girl) return '你刚刚怎么突然消失了？'
 
-  const index = Math.floor(Math.random() * girl.checkInTemplates.length)
-  return girl.checkInTemplates[index]
+  const templates = girl.checkInTemplates.map(normalizeTemplateText).filter(Boolean)
+  if (templates.length === 0) {
+    return '你刚刚怎么突然消失了？'
+  }
+
+  const recentGirlMessages = new Set(
+    chatHistory
+      .slice(-6)
+      .filter((message) => message.role === 'girl')
+      .map((message) => normalizeTemplateText(message.content)),
+  )
+
+  const preferredTemplates = templates.filter(
+    (template) => template !== lastTemplate && !recentGirlMessages.has(template),
+  )
+  const alternativeTemplates = templates.filter((template) => template !== lastTemplate)
+  const candidatePool =
+    preferredTemplates.length > 0
+      ? preferredTemplates
+      : alternativeTemplates.length > 0
+      ? alternativeTemplates
+      : templates
+
+  const index = Math.floor(Math.random() * candidatePool.length)
+  return candidatePool[index]
 }

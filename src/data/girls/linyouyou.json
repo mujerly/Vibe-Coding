@@ -92,7 +92,9 @@
   "giftReactions": {
     "book": "她会在意你是不是送中了她真的会想看的那一类书。",
     "letter": "只要内容真诚，她会明显被打动。",
-    "luxury-bag": "她会觉得有点用力过猛，不一定舒服。"
+    "luxury-bag": "她会看着包，有点不知所措，说'你不用买这种的，太重了'。",
+    "milk-tea": "接过来，说了声谢谢，但表情平平，不是她最在乎的那种心意。",
+    "cheap-gadget": "礼貌地收下，但眼神里看不出什么情绪。"
   },
   "fallback": {
     "signalWeights": { "sweet": 0, "long": 2, "gift": 1, "oily": -5, "practical": 0, "deep": 4 },

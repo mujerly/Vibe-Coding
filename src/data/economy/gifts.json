@@ -1,50 +1,122 @@
 [
   {
-    "id": "milk-tea",
-    "name": "奶茶",
-    "emoji": "🍵",
-    "price": 15,
-    "description": "便宜好用的通用礼物，小甜尤其吃这一套。",
-    "advice": "推荐给：小甜 / 通用保底"
+    "id": "letter",
+    "name": "手写信",
+    "emoji": "✉️",
+    "price": 0,
+    "description": "不花钱，全靠真诚。内容到位，比任何礼物都有分量。",
+    "advice": "推荐给：林悠悠 / 小甜"
   },
   {
-    "id": "rose",
-    "name": "红玫瑰",
-    "emoji": "🌹",
-    "price": 50,
-    "description": "恋爱氛围直接拉满，但 Jessica 会觉得有点老套。",
-    "advice": "推荐给：小甜"
+    "id": "milk-tea",
+    "name": "奶茶",
+    "emoji": "🧋",
+    "price": 15,
+    "description": "随手一送，没什么惊喜，但至少在想着对方。",
+    "advice": "推荐给：通用保底"
+  },
+  {
+    "id": "cheap-gadget",
+    "name": "廉价小玩意",
+    "emoji": "🧸",
+    "price": 25,
+    "description": "看起来随便挑的，小甜会失望，Jessica 会觉得你不走心。",
+    "advice": "不推荐任何人"
+  },
+  {
+    "id": "fake-gem",
+    "name": "仿制宝石",
+    "emoji": "💎",
+    "price": 45,
+    "description": "小甜一眼看穿，会皱眉。不是不好看，是假的。",
+    "advice": "避开：小甜"
   },
   {
     "id": "book",
     "name": "精装书",
     "emoji": "📚",
-    "price": 80,
-    "description": "林悠悠的高匹配礼物，送中主题会很加分。",
+    "price": 75,
+    "description": "选对了主题，林悠悠会认真翻，还可能聊好几轮。",
     "advice": "推荐给：林悠悠"
   },
   {
-    "id": "lipstick",
-    "name": "口红",
-    "emoji": "💄",
-    "price": 200,
-    "description": "Jessica 会认真看待这类有品质的投入。",
+    "id": "crystal",
+    "name": "水晶摆件",
+    "emoji": "🔮",
+    "price": 90,
+    "description": "小甜会对着光看好久，说和她的月亮星座颜色很配。",
+    "advice": "推荐给：小甜"
+  },
+  {
+    "id": "design-magazine",
+    "name": "北欧设计杂志",
+    "emoji": "🗂️",
+    "price": 90,
+    "description": "Jessica 会立刻坐下来翻，可以聊出一大堆内容。",
     "advice": "推荐给：Jessica"
+  },
+  {
+    "id": "old-book",
+    "name": "古旧神秘学书",
+    "emoji": "📖",
+    "price": 130,
+    "description": "小甜会小心翼翼翻看，闻着纸墨味说里面藏着古老秘密。",
+    "advice": "推荐给：小甜"
+  },
+  {
+    "id": "nordic-candle",
+    "name": "北欧手工香薰蜡烛",
+    "emoji": "🕯️",
+    "price": 160,
+    "description": "Jessica 会闻了闻，说是她喜欢的味道，语气明显变温柔。",
+    "advice": "推荐给：Jessica"
+  },
+  {
+    "id": "mystic-tarot",
+    "name": "塔罗牌套装",
+    "emoji": "🃏",
+    "price": 220,
+    "description": "小甜会立刻拆开，说今晚就用这个给你占卜。",
+    "advice": "推荐给：小甜"
+  },
+  {
+    "id": "vinyl-record",
+    "name": "黑胶唱片",
+    "emoji": "🎵",
+    "price": 280,
+    "description": "Jessica 会翻来覆去看封面，说这张她找了很久了。",
+    "advice": "推荐给：Jessica"
+  },
+  {
+    "id": "concert-ticket",
+    "name": "音乐会门票",
+    "emoji": "🎫",
+    "price": 480,
+    "description": "Jessica 会愣一下，然后惊喜地说这个乐团她关注好久了。",
+    "advice": "推荐给：Jessica"
+  },
+  {
+    "id": "antique-astrolabe",
+    "name": "古董星盘",
+    "emoji": "⭐",
+    "price": 880,
+    "description": "小甜会眼睛发亮，说和她16岁收到的那块好像，捧着转来转去。",
+    "advice": "推荐给：小甜（最高匹配）"
   },
   {
     "id": "luxury-bag",
     "name": "名牌包",
     "emoji": "👜",
     "price": 2000,
-    "description": "大杀器，但钱包压力也最大。",
-    "advice": "推荐给：Jessica"
+    "description": "大手笔，但不是每个人都愿意接受这种重量的心意。林悠悠会不舒服。",
+    "advice": "避开：林悠悠 / 谨慎使用"
   },
   {
-    "id": "letter",
-    "name": "手写信",
-    "emoji": "✉️",
-    "price": 0,
-    "description": "不花钱，完全靠内容和诚意取胜。",
-    "advice": "推荐给：林悠悠 / 小甜"
+    "id": "too-expensive-gift",
+    "name": "奢华珠宝套装",
+    "emoji": "💍",
+    "price": 3000,
+    "description": "Jessica 会微微皱眉说太贵了，你干嘛呀——她不喜欢被砸钱压住。",
+    "advice": "避开：Jessica"
   }
 ]

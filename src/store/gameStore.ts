@@ -4,6 +4,7 @@ import { createInitialGirlsState } from '../systems/girls/girlProfiles'
 import { jobs } from '../systems/earning/jobs'
 import { shopItems } from '../systems/spending/shopData'
 import {
+  canGirlSendCheckIn,
   clampAffection,
   getDelayedReplyPenalty,
   getGiftPreferenceDelta,
@@ -277,20 +278,26 @@ export const useGameStore = create<GameStore>((set, get) => {
 
         const penalty = getDelayedReplyPenalty(girlId, penaltyDuration, girl.affection)
         const nextAffection = clampAffection(girl.affection - penalty)
-        const complaintMessage = createMessage(
-          'girl',
-          getWorkComplaintMessage(girlId),
-          undefined,
-          settlementTime,
-        )
+        const shouldSendComplaint =
+          canGirlSendCheckIn(girlId, girl.affection) && !girl.pendingCheckInReply
+        const complaintMessage = shouldSendComplaint
+          ? createMessage(
+              'girl',
+              getWorkComplaintMessage(girlId, girl.chatHistory, girl.lastCheckInTemplate),
+              undefined,
+              settlementTime,
+            )
+          : undefined
         const mood = penalty >= 3 ? uiStrings.system.workPenaltyMoodBad : uiStrings.system.workPenaltyMoodMild
         const nextStatus = resolveGirlStatus(nextAffection, mood)
         const nextHistory = appendBlockNotice(
-          [...girl.chatHistory, complaintMessage],
+          complaintMessage ? [...girl.chatHistory, complaintMessage] : girl.chatHistory,
           girl.profile.name,
           girl.status,
           nextStatus,
         )
+        const messageDelta = nextHistory.length - girl.chatHistory.length
+        const lastHistoryMessage = nextHistory[nextHistory.length - 1]
 
         return [
           girlId,
@@ -299,9 +306,11 @@ export const useGameStore = create<GameStore>((set, get) => {
             affection: nextAffection,
             mood,
             status: nextStatus,
-            unreadCount: girl.unreadCount + 1,
+            unreadCount: girl.unreadCount + messageDelta,
             chatHistory: nextHistory,
-            lastContactTime: complaintMessage.timestamp,
+            lastContactTime: lastHistoryMessage?.timestamp ?? girl.lastContactTime,
+            pendingCheckInReply: complaintMessage ? true : girl.pendingCheckInReply,
+            lastCheckInTemplate: complaintMessage?.content ?? girl.lastCheckInTemplate,
           },
         ]
       }),
@@ -712,6 +721,7 @@ export const useGameStore = create<GameStore>((set, get) => {
       ...girl,
       chatHistory: [...girl.chatHistory, playerMessage],
       lastContactTime: playerMessage.timestamp,
+      pendingCheckInReply: false,
     }
 
     set((state) => ({
@@ -827,6 +837,7 @@ export const useGameStore = create<GameStore>((set, get) => {
             ...latestGirl,
             chatHistory: [...latestGirl.chatHistory, giftMessage],
             lastContactTime: giftMessage.timestamp,
+            pendingCheckInReply: false,
           },
         },
         gameTime: giftMessageTime,

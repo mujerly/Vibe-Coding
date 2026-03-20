@@ -33,6 +33,8 @@ export interface GirlState {
   chatHistory: Message[]
   unreadCount: number
   lastContactTime: number
+  pendingCheckInReply: boolean
+  lastCheckInTemplate?: string
   lastReplySource?: 'ai' | 'fallback'
   lastReplyDebugReason?: string
 }
