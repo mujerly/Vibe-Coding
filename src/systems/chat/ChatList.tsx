@@ -27,8 +27,8 @@ const affectionTone = (affection: number) => {
 export function ChatList({ girls, onOpen }: ChatListProps) {
   const s = uiStrings.chatList
   const sortedGirls = Object.values(girls).sort((a, b) => {
-    const aLast = a.chatHistory[a.chatHistory.length - 1]?.timestamp ?? 0
-    const bLast = b.chatHistory[b.chatHistory.length - 1]?.timestamp ?? 0
+    const aLast = a.chatHistory[a.chatHistory.length - 1]?.timestamp ?? a.lastContactTime
+    const bLast = b.chatHistory[b.chatHistory.length - 1]?.timestamp ?? b.lastContactTime
     return bLast - aLast
   })
 
@@ -56,7 +56,9 @@ export function ChatList({ girls, onOpen }: ChatListProps) {
         {sortedGirls.map((girl, index) => {
           const lastMessage = girl.chatHistory[girl.chatHistory.length - 1]
           const lastSticker = getGirlStickerById(girl.profile.id, lastMessage?.stickerId)
-          const lastPreview = lastSticker ? s.stickerPreview : lastMessage?.content || s.noMessages
+          const lastPreview = lastSticker
+            ? s.stickerPreview
+            : lastMessage?.content || '还没有聊过，主动打个招呼？'
 
           return (
             <motion.button

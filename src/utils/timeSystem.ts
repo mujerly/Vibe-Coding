@@ -4,7 +4,7 @@ import type { CurrentJob } from '../store/gameTypes'
 const MINUTE_MS = 60_000
 const DAY_MS = 24 * 60 * MINUTE_MS
 
-const GAME_START_TIME = new Date(2026, 0, 1, 9, 0, 0, 0).getTime()
+const GAME_START_TIME = new Date(2026, 0, 1, 12, 0, 0, 0).getTime()
 
 const ACTION_TIME_COSTS = {
   message: 12,
@@ -89,13 +89,17 @@ export const getGirlRoutineStatus = (girlId: string, gameTime: number): GirlRout
   }
 
   if (isHourInWrappedRange(hour, girl.routine.sleepHour, girl.routine.wakeHour)) {
+    const sleepH = girl.routine.sleepHour
+    const wakeH = girl.routine.wakeHour
+    const sleepLabel = sleepH < 6 ? `凌晨 ${padTime(sleepH)}:00` : `${padTime(sleepH)}:00`
+    // Calculate real minutes until she wakes up
+    const hoursUntilWake = hour < wakeH ? wakeH - hour : 24 - hour + wakeH
+    const replyDelayMinutes = hoursUntilWake * 60 + 15
     return {
       state: 'sleeping',
-      label: '已睡',
-      description: `她一般 ${padTime(girl.routine.sleepHour)}:00 后休息，${padTime(
-        girl.routine.wakeHour,
-      )}:00 左右才醒`,
-      replyDelayMinutes: 48,
+      label: '睡觉中',
+      description: `${sleepLabel} 入睡，${padTime(wakeH)}:00 左右起床`,
+      replyDelayMinutes,
     }
   }
 

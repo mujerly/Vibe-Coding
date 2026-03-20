@@ -17,7 +17,12 @@ export const createInitialGirlsState = (
   const girls = Object.values(girlDefinitions)
 
   return girls.reduce<Record<string, GirlState>>((acc, girl, index) => {
-    const timestamp = addGameMinutes(initialGameTime, -(girls.length - index) * 50)
+    // Set each girl's intro message to ~1h after her wakeHour on Day 1, staggered by 20min
+    // This ensures no girl "sends a message while sleeping"
+    const wakeHour = girl.routine.wakeHour
+    const introMs = new Date(2026, 0, 1, wakeHour + 1, index * 20, 0, 0).getTime()
+    // Never exceed game start time (the player hasn't opened the app yet)
+    const timestamp = Math.min(introMs, initialGameTime - (girls.length - index) * 20 * 60_000)
 
     const profile: GirlProfile = {
       id: girl.id,
@@ -34,15 +39,10 @@ export const createInitialGirlsState = (
       affection: balance.initialAffection,
       mood: balance.initialMood,
       status: 'normal',
-      chatHistory: [
-        {
-          id: `${girl.id}-intro`,
-          role: 'girl',
-          content: girl.intro,
-          timestamp,
-        },
-      ],
-      unreadCount: 1,
+      chatHistory: girl.intro
+        ? [{ id: `${girl.id}-intro`, role: 'girl' as const, content: girl.intro, timestamp }]
+        : [],
+      unreadCount: girl.intro ? 1 : 0,
       lastContactTime: timestamp,
       lastReplySource: undefined,
       lastReplyDebugReason: undefined,

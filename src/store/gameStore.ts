@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ActionResult, GameState, Gift, GirlState, Message, WorkSettlement } from './gameTypes'
+import type { ActionResult, EndingType, GameState, Gift, GirlRelationship, GirlState, Message, PlayerProfile, WorkSettlement } from './gameTypes'
 import { createInitialGirlsState } from '../systems/girls/girlProfiles'
 import { jobs } from '../systems/earning/jobs'
 import { shopItems } from '../systems/spending/shopData'
@@ -43,6 +43,7 @@ interface GameActions {
   isPlayerBusy: () => boolean
   getWorkProgress: () => number
   updateAffection: (girlId: string, change: number, mood?: string) => void
+  setPlayerProfile: (profile: Omit<PlayerProfile, 'configured'>) => void
   resetGame: () => void
 }
 
@@ -149,6 +150,13 @@ const appendBlockNotice = (
   return [...history, createMessage('system', t(uiStrings.system.girlBlockedNotice, { name: girlName }))]
 }
 
+const DEATH_NARRATIVES: Record<string, string> = {
+  xiaotian_betrayal:
+    '小甜把你拉黑的第二天，她父亲的人找上了门。\n\n没有争吵，没有解释的机会。\n\n你永远消失在那个深夜。',
+  caught_cheating:
+    '纸终究包不住火。\n\n她们互相认识的事你根本不知道。等你意识到的时候，已经太晚了。\n\n游戏结束。',
+}
+
 const computeDerivedState = (state: Pick<GameState, 'player' | 'girls'>) => {
   const { scoring, gameOverMessage } = balance
   const girls = Object.values(state.girls)
@@ -163,18 +171,66 @@ const computeDerivedState = (state: Pick<GameState, 'player' | 'girls'>) => {
       Math.floor(state.player.totalSpent / scoring.spentDivisor) -
       blockedCount * scoring.blockedPenalty,
   )
-  const gameOver = blockedCount === girls.length
 
+  // Victory: all girls conquered
+  if (conqueredCount === girls.length && girls.length > 0) {
+    return { score, gameOver: true, gameOverReason: '你赢了。', endingType: 'victory' as EndingType, endingNarrative: undefined }
+  }
+
+  // Death: Xiaotian blocked + another girl at high affection (caught cheating)
+  const xiaotian = state.girls['xiaotian']
+  const othersHighAffection = girls.filter((g) => g.profile.id !== 'xiaotian' && g.affection >= 55)
+  if (xiaotian?.status === 'blocked' && othersHighAffection.length >= 1) {
+    return {
+      score,
+      gameOver: true,
+      gameOverReason: '死亡结局',
+      endingType: 'death' as EndingType,
+      endingNarrative: DEATH_NARRATIVES.xiaotian_betrayal,
+    }
+  }
+
+  // Death: all three girls learned about each other (caught cheating on all)
+  if (blockedCount >= 2 && girls.filter((g) => g.affection <= 10).length >= 2) {
+    return {
+      score,
+      gameOver: true,
+      gameOverReason: '死亡结局',
+      endingType: 'death' as EndingType,
+      endingNarrative: DEATH_NARRATIVES.caught_cheating,
+    }
+  }
+
+  // Default loss: all blocked
+  const gameOver = blockedCount === girls.length
   return {
     score,
     gameOver,
     gameOverReason: gameOver ? gameOverMessage : undefined,
+    endingType: (gameOver ? 'all_blocked' : 'playing') as EndingType,
+    endingNarrative: undefined,
   }
+}
+
+const generateRelationships = (girlIds: string[]): GirlRelationship[] => {
+  if (girlIds.length < 2) return []
+  const shuffled = [...girlIds].sort(() => Math.random() - 0.5)
+  const relationships: GirlRelationship[] = [
+    { girl1Id: shuffled[0], girl2Id: shuffled[1], type: 'friends', gossipTriggered: false },
+  ]
+  if (girlIds.length >= 3) {
+    relationships.push({ girl1Id: shuffled[1], girl2Id: shuffled[2], type: 'rivals', gossipTriggered: false })
+  }
+  return relationships
 }
 
 const buildInitialState = (): GameState => {
   const initialGameTime = createInitialGameTime()
+  const initialGirls = createInitialGirlsState(initialGameTime)
+  const initialRelationships = generateRelationships(Object.keys(initialGirls))
+
   const initialState: GameState = {
+    playerProfile: { configured: false, name: '', gender: 'male' },
     player: {
       money: balance.initialMoney,
       totalSpent: 0,
@@ -182,13 +238,13 @@ const buildInitialState = (): GameState => {
       inventory: [],
       timeStatus: 'idle',
     },
-    girls: createInitialGirlsState(initialGameTime),
-    economy: {
-      shopItems,
-    },
+    girls: initialGirls,
+    relationships: initialRelationships,
+    economy: { shopItems },
     gameTime: initialGameTime,
     score: 0,
     gameOver: false,
+    endingType: 'playing',
   }
 
   return {
@@ -333,13 +389,46 @@ export const useGameStore = create<GameStore>((set, get) => {
         }
 
         const finalizedGirl = finalizeGirl(latestGirl, replyMessage, historyWithReply)
-        const nextGirls = {
+        let nextGirls: typeof state.girls = {
           ...state.girls,
           [girlId]: finalizedGirl,
         }
 
+        // Gossip event: if a friend pair both have affection >= 65, trigger once
+        const nextRelationships = state.relationships.map((rel) => {
+          if (rel.type !== 'friends' || rel.gossipTriggered) return rel
+          const g1 = nextGirls[rel.girl1Id]
+          const g2 = nextGirls[rel.girl2Id]
+          if (!g1 || !g2 || g1.affection < 65 || g2.affection < 65) return rel
+
+          const gossipMsg = createMessage(
+            'system',
+            `${g1.profile.name}和${g2.profile.name}好像在聊到你的事情…`,
+            undefined,
+            replyMessage.timestamp + 120_000,
+          )
+          const affectDelta = Math.random() > 0.5 ? 2 : -2
+          nextGirls = {
+            ...nextGirls,
+            [rel.girl1Id]: {
+              ...nextGirls[rel.girl1Id],
+              affection: clampAffection(g1.affection + affectDelta),
+              chatHistory: [...nextGirls[rel.girl1Id].chatHistory, gossipMsg],
+              unreadCount: nextGirls[rel.girl1Id].unreadCount + 1,
+            },
+            [rel.girl2Id]: {
+              ...nextGirls[rel.girl2Id],
+              affection: clampAffection(g2.affection + affectDelta),
+              chatHistory: [...nextGirls[rel.girl2Id].chatHistory, gossipMsg],
+              unreadCount: nextGirls[rel.girl2Id].unreadCount + 1,
+            },
+          }
+          return { ...rel, gossipTriggered: true }
+        })
+
         return {
           girls: nextGirls,
+          relationships: nextRelationships,
           gameTime: replyMessage.timestamp,
           ...computeDerivedState({
             player: state.player,
@@ -642,12 +731,15 @@ export const useGameStore = create<GameStore>((set, get) => {
     }))
 
     const replyRequestStartedAt = Date.now()
+    const { playerProfile } = get()
     const aiPayload = await generateChatReply({
       girlId,
       girl: optimisticGirl,
       recentHistory: optimisticGirl.chatHistory.slice(-20),
       playerMessage: content,
       gameTime: playerMessageTime,
+      playerName: playerProfile.configured ? playerProfile.name : undefined,
+      playerGender: playerProfile.configured ? playerProfile.gender : undefined,
     })
     const replyTime = addGameMinutes(playerMessageTime, routineStatus.replyDelayMinutes)
 
@@ -755,6 +847,8 @@ export const useGameStore = create<GameStore>((set, get) => {
         girlId,
         gift,
       )}`,
+      playerName: stateAfterGift.playerProfile.configured ? stateAfterGift.playerProfile.name : undefined,
+      playerGender: stateAfterGift.playerProfile.configured ? stateAfterGift.playerProfile.gender : undefined,
     })
     const replyTime = addGameMinutes(giftMessageTime, routineStatus.replyDelayMinutes)
 
@@ -805,6 +899,12 @@ export const useGameStore = create<GameStore>((set, get) => {
     })
 
     return { ok: true }
+  },
+
+  setPlayerProfile: (profile) => {
+    set(() => ({
+      playerProfile: { ...profile, configured: true },
+    }))
   },
 
   resetGame: () => {

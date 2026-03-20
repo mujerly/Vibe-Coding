@@ -74,7 +74,23 @@ export interface WorkSettlement {
   net: number
 }
 
+export type EndingType = 'playing' | 'all_blocked' | 'death' | 'victory'
+
+export interface PlayerProfile {
+  configured: boolean
+  name: string
+  gender: 'male' | 'female'
+}
+
+export interface GirlRelationship {
+  girl1Id: string
+  girl2Id: string
+  type: 'friends' | 'rivals'
+  gossipTriggered: boolean
+}
+
 export interface GameState {
+  playerProfile: PlayerProfile
   player: {
     money: number
     totalSpent: number
@@ -84,6 +100,7 @@ export interface GameState {
     currentJob?: CurrentJob
   }
   girls: Record<string, GirlState>
+  relationships: GirlRelationship[]
   economy: {
     shopItems: Gift[]
   }
@@ -91,6 +108,8 @@ export interface GameState {
   score: number
   gameOver: boolean
   gameOverReason?: string
+  endingType: EndingType
+  endingNarrative?: string
 }
 
 export interface ActionResult {

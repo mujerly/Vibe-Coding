@@ -38,7 +38,6 @@ const isGirlConfig = (value: unknown): value is GirlConfig => {
     typeof candidate.id === 'string' &&
     typeof candidate.name === 'string' &&
     typeof candidate.avatar === 'string' &&
-    typeof candidate.intro === 'string' &&
     candidate.prompt != null &&
     candidate.fallback != null
   )

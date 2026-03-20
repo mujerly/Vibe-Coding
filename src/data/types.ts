@@ -4,6 +4,7 @@ import type { AppTab } from '../store/gameTypes'
 export interface StageScript {
   mindset: string
   replyStyle: string
+  messagePattern: string
   initiatives: string
   exampleReplies: string[]
   transitionHint: string
@@ -76,6 +77,16 @@ export interface GirlFallbackConfig {
   badReply: FallbackReplyTemplate | null
 }
 
+/** Background info for a girl */
+export interface GirlBackground {
+  hometown: string
+  currentCity: string
+  occupation: string
+  hobbies: string[]
+  dailyLife: string
+  personalityType: string
+}
+
 /** Full girl configuration (loaded from JSON) */
 export interface GirlConfig {
   id: string
@@ -84,13 +95,14 @@ export interface GirlConfig {
   age: number
   personality: string
   bio: string
+  background: GirlBackground
   tags: string[]
   speakingStyle: string
   interests: string[]
   likedGiftIds: string[]
   dislikedGiftIds: string[]
   anxiousWaitMultiplier: number
-  intro: string
+  intro?: string
   checkInTemplates: string[]
   quickPrompts: string[]
   routine: GirlRoutineConfig

@@ -11,6 +11,8 @@ interface ChatRequestContext {
   playerMessage: string
   gameTime: number
   extraContext?: string
+  playerName?: string
+  playerGender?: 'male' | 'female'
 }
 
 export interface ChatReplyPayload {
@@ -228,6 +230,8 @@ const requestAiReply = async (context: ChatRequestContext) => {
             recentHistory: context.recentHistory,
             gameTime: context.gameTime,
             extraContext: context.extraContext,
+            playerName: context.playerName,
+            playerGender: context.playerGender,
           }),
         },
         ...buildOpenAiHistory(context.recentHistory),

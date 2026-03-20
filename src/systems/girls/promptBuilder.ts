@@ -9,6 +9,8 @@ interface PromptContext {
   recentHistory: Message[]
   gameTime: number
   extraContext?: string
+  playerName?: string
+  playerGender?: 'male' | 'female'
 }
 
 /**
@@ -27,12 +29,22 @@ export const getSystemPrompt = (girlId: string, context: PromptContext) => {
   const stickerPack = getGirlStickerPack(girlId)
   const routine = getGirlRoutineStatus(girlId, context.gameTime)
 
+  const backgroundLines = girl.background
+    ? [
+        `城市：${girl.background.currentCity}（老家：${girl.background.hometown}）`,
+        `职业：${girl.background.occupation}`,
+        `爱好：${girl.background.hobbies.join('、')}`,
+        `日常：${girl.background.dailyLife}`,
+      ]
+    : []
+
   const personaBlock = [
     '## 你的人设',
     girl.prompt.persona,
     '',
     `说话风格：${girl.speakingStyle}`,
     `在意的话题：${girl.interests.join('、')}`,
+    ...(backgroundLines.length > 0 ? ['', '## 你的基本信息', ...backgroundLines] : []),
     `雷区：${girl.prompt.redLines.join('、')}`,
     `软肋：${girl.prompt.softSpots.join('、')}`,
   ].join('\n')
@@ -42,6 +54,7 @@ export const getSystemPrompt = (girlId: string, context: PromptContext) => {
         `## 当前阶段：${stage}`,
         `心理状态：${stageScript.mindset}`,
         `回复特点：${stageScript.replyStyle}`,
+        `消息条数模式：${stageScript.messagePattern}`,
         `主动行为：${stageScript.initiatives}`,
         '',
         '这个阶段的典型回复：',
@@ -89,8 +102,13 @@ export const getSystemPrompt = (girlId: string, context: PromptContext) => {
     .map((message) => formatGirlMessageForPrompt(girlId, message))
     .join('\n')
 
+  const playerLine = context.playerName
+    ? `对方名叫"${context.playerName}"，性别：${context.playerGender === 'female' ? '女' : '男'}`
+    : '对方信息未知'
+
   const runtimeBlock = [
     '## 当前状态',
+    playerLine,
     `好感度：${context.girl.affection}/100（${stage}）`,
     `当前情绪：${context.girl.mood}`,
     `当前时间：${formatGameDayLabel(context.gameTime)} ${formatGameClock(context.gameTime)}`,

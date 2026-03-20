@@ -8,13 +8,14 @@ import { HomeBar } from './components/HomeBar'
 import { PhoneFrame } from './components/PhoneFrame'
 import { ChatList } from './systems/chat/ChatList'
 import { ChatRoom } from './systems/chat/ChatRoom'
+import { CharacterCreationScreen } from './systems/character/CharacterCreationScreen'
 import { DesktopPage } from './systems/desktop/DesktopPage'
 import { EarningPage } from './systems/earning/EarningPage'
 import { getRelationshipStage } from './systems/girls/affectionLogic'
 import { TaobaoPage } from './systems/spending/TaobaoPage'
 import { useAiSessionStore } from './store/aiSessionStore'
 import { useGameStore } from './store/gameStore'
-import type { AppTab, GirlState } from './store/gameTypes'
+import type { AppTab, EndingType, GirlState } from './store/gameTypes'
 import { appConfigs, jobConfigs, uiStrings, t } from './data'
 
 function StatsView({ girls }: { girls: Record<string, GirlState> }) {
@@ -107,6 +108,68 @@ function StatsView({ girls }: { girls: Record<string, GirlState> }) {
   )
 }
 
+function EndingScreen({ endingType, narrative, score, onRestart }: {
+  endingType: EndingType
+  narrative?: string
+  score: number
+  onRestart: () => void
+}) {
+  const isDeath = endingType === 'death'
+  const isVictory = endingType === 'victory'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className={`flex h-full flex-col items-center justify-center gap-6 px-6 text-center ${
+        isDeath ? 'bg-[#1a0a0e]' : isVictory ? 'bg-[#0d1a0a]' : 'bg-[#0d0d1a]'
+      }`}
+    >
+      <motion.div
+        initial={{ scale: 0.7, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.2, type: 'spring' }}
+        className="text-6xl"
+      >
+        {isDeath ? '💀' : isVictory ? '👑' : '🚫'}
+      </motion.div>
+
+      <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
+        <h1 className={`font-display text-2xl font-bold ${isDeath ? 'text-red-400' : isVictory ? 'text-yellow-400' : 'text-slate-300'}`}>
+          {isDeath ? '死亡结局' : isVictory ? '完美结局' : '游戏结束'}
+        </h1>
+        {narrative && (
+          <p className="mt-4 whitespace-pre-line text-sm leading-7 text-white/60">{narrative}</p>
+        )}
+      </motion.div>
+
+      <motion.div
+        initial={{ y: 12, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.6 }}
+        className="rounded-2xl bg-white/10 px-8 py-4"
+      >
+        <div className="text-xs font-bold uppercase tracking-wider text-white/40">最终得分</div>
+        <div className={`mt-1 text-4xl font-bold ${isDeath ? 'text-red-400' : isVictory ? 'text-yellow-400' : 'text-white'}`}>
+          {score}
+        </div>
+      </motion.div>
+
+      <motion.button
+        type="button"
+        onClick={onRestart}
+        whileTap={{ scale: 0.96 }}
+        initial={{ y: 12, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="rounded-2xl bg-white/15 px-8 py-3 text-sm font-semibold text-white hover:bg-white/25"
+      >
+        重新开始
+      </motion.button>
+    </motion.div>
+  )
+}
+
 const getPrimaryApp = (appId: AppTab) => appConfigs.find((app) => app.appId === appId)
 
 const getCurrentJobApp = (jobType?: string): AppTab | null => {
@@ -130,10 +193,13 @@ function App() {
   const aiConfig = useAiConfig()
   const girls = useGameStore((state) => state.girls)
   const player = useGameStore((state) => state.player)
+  const playerProfile = useGameStore((state) => state.playerProfile)
   const gameTime = useGameStore((state) => state.gameTime)
   const score = useGameStore((state) => state.score)
   const gameOver = useGameStore((state) => state.gameOver)
   const gameOverReason = useGameStore((state) => state.gameOverReason)
+  const endingType = useGameStore((state) => state.endingType)
+  const endingNarrative = useGameStore((state) => state.endingNarrative)
   const finishWork = useGameStore((state) => state.finishWork)
   const markGirlRead = useGameStore((state) => state.markGirlRead)
   const resetGame = useGameStore((state) => state.resetGame)
@@ -201,7 +267,32 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [settlementMessage])
 
+  const handleRestart = () => {
+    resetGame()
+    setActiveView('desktop')
+    setSelectedGirlId(null)
+    setChatOpen(false)
+    setSettlementMessage(null)
+  }
+
   const renderCurrentView = () => {
+    // Show ending screen inside the phone when game is over
+    if (gameOver && endingType !== 'playing') {
+      return (
+        <EndingScreen
+          endingType={endingType}
+          narrative={endingNarrative}
+          score={score}
+          onRestart={handleRestart}
+        />
+      )
+    }
+
+    // Show character creation screen before game starts
+    if (!playerProfile.configured) {
+      return <CharacterCreationScreen />
+    }
+
     if (activeView === 'desktop') {
       return (
         <DesktopPage
@@ -300,6 +391,11 @@ function App() {
           <div className="rounded-[34px] bg-white/75 p-6 shadow-soft backdrop-blur">
             <p className="text-xs uppercase tracking-[0.32em] text-wine/45">Vibe Coding Demo</p>
             <h1 className="mt-3 font-display text-4xl leading-tight text-ink">{sa.title}</h1>
+            {playerProfile.configured && (
+              <p className="mt-1 text-sm text-wine/60">
+                {playerProfile.gender === 'female' ? '♀' : '♂'} {playerProfile.name}
+              </p>
+            )}
             <p className="mt-4 text-sm leading-7 text-wine/70">
               {sa.subtitle}
             </p>
@@ -371,13 +467,7 @@ function App() {
 
             <button
               type="button"
-              onClick={() => {
-                resetGame()
-                setActiveView('desktop')
-                setSelectedGirlId(null)
-                setChatOpen(false)
-                setSettlementMessage(null)
-              }}
+              onClick={handleRestart}
               className="mt-4 w-full rounded-3xl bg-wine px-4 py-3 text-sm font-medium text-white"
             >
               {sa.resetButton}
