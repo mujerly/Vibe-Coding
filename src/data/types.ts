@@ -1,3 +1,5 @@
+import type { AppTab } from '../store/gameTypes'
+
 /** Stage-specific prompt script for a girl at a given affection tier */
 export interface StageScript {
   mindset: string
@@ -75,6 +77,29 @@ export interface GiftConfig {
   price: number
   description: string
   advice: string
+}
+
+/** Slot machine symbol configuration */
+export interface SlotSymbolConfig {
+  id: string
+  label: string
+  icon: string
+  weight: number
+  payout: number
+  panelClassName: string
+  glowClassName: string
+  rarityLabel: string
+}
+
+/** Desktop app icon configuration */
+export interface PhoneAppConfig {
+  id: string
+  appId: AppTab
+  name: string
+  icon: string
+  iconBackground: string
+  iconColor: string
+  placement: 'grid' | 'dock'
 }
 
 /** Affection tier definition */
@@ -168,6 +193,35 @@ export interface UiStringsConfig {
     shop: string
     stats: string
   }
+  desktop: {
+    homeButton: string
+    workingElsewhere: string
+  }
+  aiSession: {
+    title: string
+    subtitle: string
+    keyLabel: string
+    keyPlaceholder: string
+    modelLabel: string
+    modelPlaceholder: string
+    modelHelper: string
+    modelCustomOption: string
+    modelDetectButton: string
+    modelDetectLoading: string
+    modelDetectSuccess: string
+    modelDetectFailed: string
+    modelDetectUnknownError: string
+    hint: string
+    openButton: string
+    editButton: string
+    clearButton: string
+    saveButton: string
+    cancelButton: string
+    activeBadge: string
+    inactiveBadge: string
+    sessionMode: string
+    fallbackMode: string
+  }
   statusBar: {
     aiCloud: string
     aiFallback: string
@@ -220,6 +274,23 @@ export interface UiStringsConfig {
     jobStarted: string
     jobFailed: string
     manualSettled: string
+    slotTitle: string
+    slotSubtitle: string
+    slotSpinCost: string
+    slotJackpot: string
+    slotRules: string
+    slotOddsTitle: string
+    slotChance: string
+    slotPayout: string
+    slotNet: string
+    slotResult: string
+    slotSpinButton: string
+    slotSpinning: string
+    slotNeedMoney: string
+    slotPayoutRange: string
+    slotLoseFeedback: string
+    slotWinFeedback: string
+    slotJackpotFeedback: string
     deliverySubtitle: string
     deliveryControls: string
     deliveryProgress: string
@@ -256,6 +327,14 @@ export interface UiStringsConfig {
     purchaseFailed: string
     buyButton: string
     insufficientFunds: string
+  }
+  taobao: {
+    shopTab: string
+    reviewTab: string
+    shopTitle: string
+    shopSubtitle: string
+    reviewTitle: string
+    reviewSubtitle: string
   }
   errors: {
     girlNotFound: string

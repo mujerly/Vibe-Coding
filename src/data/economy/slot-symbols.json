@@ -1,0 +1,52 @@
+[
+  {
+    "id": "cherry",
+    "label": "樱桃",
+    "icon": "🍒",
+    "weight": 38,
+    "payout": 18,
+    "panelClassName": "from-rose-100 to-rose-50 text-rose-500",
+    "glowClassName": "shadow-[0_10px_30px_rgba(244,63,94,0.22)]",
+    "rarityLabel": "常见"
+  },
+  {
+    "id": "lemon",
+    "label": "柠檬",
+    "icon": "🍋",
+    "weight": 28,
+    "payout": 35,
+    "panelClassName": "from-amber-100 to-yellow-50 text-amber-500",
+    "glowClassName": "shadow-[0_10px_30px_rgba(245,158,11,0.22)]",
+    "rarityLabel": "少见"
+  },
+  {
+    "id": "bell",
+    "label": "金铃",
+    "icon": "🔔",
+    "weight": 18,
+    "payout": 120,
+    "panelClassName": "from-sky-100 to-cyan-50 text-sky-500",
+    "glowClassName": "shadow-[0_10px_30px_rgba(14,165,233,0.2)]",
+    "rarityLabel": "少见"
+  },
+  {
+    "id": "diamond",
+    "label": "钻石",
+    "icon": "💎",
+    "weight": 11,
+    "payout": 680,
+    "panelClassName": "from-violet-100 to-fuchsia-50 text-violet-500",
+    "glowClassName": "shadow-[0_10px_30px_rgba(139,92,246,0.22)]",
+    "rarityLabel": "稀有"
+  },
+  {
+    "id": "crown",
+    "label": "王冠",
+    "icon": "👑",
+    "weight": 5,
+    "payout": 5000,
+    "panelClassName": "from-yellow-100 to-amber-50 text-yellow-500",
+    "glowClassName": "shadow-[0_12px_35px_rgba(234,179,8,0.28)]",
+    "rarityLabel": "头奖"
+  }
+]

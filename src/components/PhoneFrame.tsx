@@ -1,20 +1,16 @@
 import type { ReactNode } from 'react'
-import type { AppTab } from '../store/gameTypes'
-import { NavBar } from './NavBar'
 import { StatusBar } from './StatusBar'
 
 interface PhoneFrameProps {
   children: ReactNode
-  activeTab: AppTab
-  onTabChange: (tab: AppTab) => void
+  footer?: ReactNode
   money: number
   timeStatus: 'idle' | 'working'
 }
 
 export function PhoneFrame({
   children,
-  activeTab,
-  onTabChange,
+  footer,
   money,
   timeStatus,
 }: PhoneFrameProps) {
@@ -24,9 +20,8 @@ export function PhoneFrame({
       <div className="flex h-[780px] flex-col overflow-hidden rounded-[34px] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,247,243,0.98))]">
         <StatusBar money={money} timeStatus={timeStatus} />
         <div className="min-h-0 flex-1">{children}</div>
-        <NavBar activeTab={activeTab} onTabChange={onTabChange} />
+        {footer}
       </div>
     </div>
   )
 }
-

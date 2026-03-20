@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ActionResult, GameState, Gift, Message } from './gameTypes'
+import type { ActionResult, GameState, Gift, Message, WorkSettlement } from './gameTypes'
 import { createInitialGirlsState } from '../systems/girls/girlProfiles'
 import { jobs } from '../systems/earning/jobs'
 import { shopItems } from '../systems/spending/shopData'
@@ -27,6 +27,7 @@ interface GameActions {
   getShopItems: () => Gift[]
   startWork: (jobType: string) => ActionResult
   finishWork: () => number
+  finishWorkWithOutcome: (reward: number, cost?: number) => WorkSettlement | null
   isPlayerBusy: () => boolean
   getWorkProgress: () => number
   updateAffection: (girlId: string, change: number, mood?: string) => void
@@ -107,8 +108,81 @@ const buildInitialState = (): GameState => {
   }
 }
 
-export const useGameStore = create<GameStore>((set, get) => ({
-  ...buildInitialState(),
+export const useGameStore = create<GameStore>((set, get) => {
+  const settleCurrentWork = (rewardOverride?: number, cost = 0): WorkSettlement | null => {
+    const state = get()
+    const currentJob = state.player.currentJob
+
+    if (!currentJob) return null
+
+    const reward = rewardOverride ?? currentJob.reward
+    const elapsedSeconds = Math.max(1, Math.ceil((Date.now() - currentJob.startTime) / 1000))
+    const penaltyDuration =
+      currentJob.completionMode === 'manual'
+        ? elapsedSeconds
+        : Math.max(currentJob.duration, elapsedSeconds)
+
+    const nextGirls = Object.fromEntries(
+      Object.entries(state.girls).map(([girlId, girl]) => {
+        if (girl.status === 'blocked') {
+          return [girlId, girl]
+        }
+
+        const penalty = getDelayedReplyPenalty(girlId, penaltyDuration, girl.affection)
+        const nextAffection = clampAffection(girl.affection - penalty)
+        const complaintMessage = createMessage('girl', getWorkComplaintMessage(girlId))
+        const mood = penalty >= 3 ? uiStrings.system.workPenaltyMoodBad : uiStrings.system.workPenaltyMoodMild
+        const nextStatus = resolveGirlStatus(nextAffection, mood)
+        const nextHistory = appendBlockNotice(
+          [...girl.chatHistory, complaintMessage],
+          girl.profile.name,
+          girl.status,
+          nextStatus,
+        )
+
+        return [
+          girlId,
+          {
+            ...girl,
+            affection: nextAffection,
+            mood,
+            status: nextStatus,
+            unreadCount: girl.unreadCount + 1,
+            chatHistory: nextHistory,
+            lastContactTime: complaintMessage.timestamp,
+          },
+        ]
+      }),
+    )
+
+    const nextPlayer = {
+      ...state.player,
+      money: state.player.money - cost + reward,
+      totalSpent: state.player.totalSpent + cost,
+      totalEarned: state.player.totalEarned + Math.max(0, reward),
+      timeStatus: 'idle' as const,
+      currentJob: undefined,
+    }
+
+    set(() => ({
+      player: nextPlayer,
+      girls: nextGirls,
+      gameTime: Date.now(),
+      ...computeDerivedState({
+        player: nextPlayer,
+        girls: nextGirls,
+      }),
+    }))
+
+    return {
+      reward,
+      cost,
+      net: reward - cost,
+    }
+  }
+
+  return {
+    ...buildInitialState(),
 
   getChatHistory: (girlId) => get().girls[girlId]?.chatHistory ?? [],
 
@@ -200,9 +274,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const job = jobs.find((item) => item.id === jobType)
     if (!job) return { ok: false, error: uiStrings.errors.jobNotFound }
+    if (job.cost != null && state.player.money < job.cost) {
+      return { ok: false, error: t(uiStrings.earning.slotNeedMoney, { cost: job.cost }) }
+    }
 
     const reward =
-      job.rewardRange != null
+      job.mode === 'slot'
+        ? job.reward
+        : job.rewardRange != null
         ? Math.floor(
             Math.random() * (job.rewardRange[1] - job.rewardRange[0] + 1) + job.rewardRange[0],
           )
@@ -228,70 +307,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   finishWork: () => {
-    const state = get()
-    const currentJob = state.player.currentJob
-
-    if (!currentJob) return 0
-
-    const elapsedSeconds = Math.max(1, Math.ceil((Date.now() - currentJob.startTime) / 1000))
-    const penaltyDuration =
-      currentJob.completionMode === 'manual'
-        ? elapsedSeconds
-        : Math.max(currentJob.duration, elapsedSeconds)
-
-    const nextGirls = Object.fromEntries(
-      Object.entries(state.girls).map(([girlId, girl]) => {
-        if (girl.status === 'blocked') {
-          return [girlId, girl]
-        }
-
-        const penalty = getDelayedReplyPenalty(girlId, penaltyDuration, girl.affection)
-        const nextAffection = clampAffection(girl.affection - penalty)
-        const complaintMessage = createMessage('girl', getWorkComplaintMessage(girlId))
-        const mood = penalty >= 3 ? uiStrings.system.workPenaltyMoodBad : uiStrings.system.workPenaltyMoodMild
-        const nextStatus = resolveGirlStatus(nextAffection, mood)
-        const nextHistory = appendBlockNotice(
-          [...girl.chatHistory, complaintMessage],
-          girl.profile.name,
-          girl.status,
-          nextStatus,
-        )
-
-        return [
-          girlId,
-          {
-            ...girl,
-            affection: nextAffection,
-            mood,
-            status: nextStatus,
-            unreadCount: girl.unreadCount + 1,
-            chatHistory: nextHistory,
-            lastContactTime: complaintMessage.timestamp,
-          },
-        ]
-      }),
-    )
-
-    const nextPlayer = {
-      ...state.player,
-      money: state.player.money + currentJob.reward,
-      totalEarned: state.player.totalEarned + currentJob.reward,
-      timeStatus: 'idle' as const,
-      currentJob: undefined,
-    }
-
-    set(() => ({
-      player: nextPlayer,
-      girls: nextGirls,
-      gameTime: Date.now(),
-      ...computeDerivedState({
-        player: nextPlayer,
-        girls: nextGirls,
-      }),
-    }))
-
-    return currentJob.reward
+    return settleCurrentWork()?.reward ?? 0
   },
+
+  finishWorkWithOutcome: (reward, cost = 0) => settleCurrentWork(reward, cost),
 
   isPlayerBusy: () => get().player.timeStatus === 'working',
 
@@ -510,4 +529,5 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...buildInitialState(),
     }))
   },
-}))
+  }
+})

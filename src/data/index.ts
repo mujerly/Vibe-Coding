@@ -1,10 +1,19 @@
 import giftsData from './economy/gifts.json'
 import jobsData from './economy/jobs.json'
+import slotSymbolsData from './economy/slot-symbols.json'
+import appsData from './apps.json'
 import balanceData from './balance.json'
 import uiStringsData from './ui-strings.json'
 import metaPromptText from './prompts/meta.txt?raw'
 
-import type { GirlConfig, GiftConfig, BalanceConfig, UiStringsConfig } from './types'
+import type {
+  GirlConfig,
+  GiftConfig,
+  BalanceConfig,
+  PhoneAppConfig,
+  SlotSymbolConfig,
+  UiStringsConfig,
+} from './types'
 import type { JobDefinition } from '../store/gameTypes'
 
 /**
@@ -24,9 +33,13 @@ export const giftConfigs: GiftConfig[] = giftsData as GiftConfig[]
 
 export const jobConfigs: JobDefinition[] = jobsData as JobDefinition[]
 
+export const slotSymbolConfigs: SlotSymbolConfig[] = slotSymbolsData as SlotSymbolConfig[]
+
+export const appConfigs: PhoneAppConfig[] = appsData as PhoneAppConfig[]
+
 export const balance: BalanceConfig = balanceData as BalanceConfig
 
-export const uiStrings: UiStringsConfig = uiStringsData as UiStringsConfig
+export const uiStrings: UiStringsConfig = uiStringsData as unknown as UiStringsConfig
 
 export const metaPrompt: string = metaPromptText
 

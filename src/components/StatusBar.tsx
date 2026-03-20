@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { isSiliconflowEnabled } from '../config/api'
+import { useAiConfig } from '../config/api'
 import { uiStrings } from '../data'
 
 interface StatusBarProps {
@@ -16,6 +16,7 @@ const formatClock = (date: Date) =>
 
 export function StatusBar({ money, timeStatus }: StatusBarProps) {
   const [clock, setClock] = useState(() => formatClock(new Date()))
+  const aiConfig = useAiConfig()
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -26,13 +27,14 @@ export function StatusBar({ money, timeStatus }: StatusBarProps) {
   }, [])
 
   const s = uiStrings.statusBar
+  const aiEnabled = Boolean(aiConfig.apiKey)
 
   return (
     <div className="flex items-center justify-between border-b border-white/70 bg-white/65 px-5 pb-3 pt-4 text-[11px] font-medium text-ink backdrop-blur">
       <div className="flex items-center gap-2">
         <span className="font-semibold tracking-[0.24em]">{clock}</span>
         <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] text-wine/80 shadow-soft">
-          {isSiliconflowEnabled ? s.aiCloud : s.aiFallback}
+          {aiEnabled ? s.aiCloud : s.aiFallback}
         </span>
       </div>
       <div className="flex items-center gap-2 text-[10px]">

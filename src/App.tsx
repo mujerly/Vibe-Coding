@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { isSiliconflowEnabled, siliconflowConfig } from './config/api'
+import { motion } from 'framer-motion'
+import { AiSessionModal } from './components/AiSessionModal'
+import { useAiConfig } from './config/api'
+import { AppDock } from './components/AppDock'
+import { HomeBar } from './components/HomeBar'
 import { PhoneFrame } from './components/PhoneFrame'
 import { ChatList } from './systems/chat/ChatList'
 import { ChatRoom } from './systems/chat/ChatRoom'
+import { DesktopPage } from './systems/desktop/DesktopPage'
 import { EarningPage } from './systems/earning/EarningPage'
 import { getRelationshipStage } from './systems/girls/affectionLogic'
-import { ShopPage } from './systems/spending/ShopPage'
+import { TaobaoPage } from './systems/spending/TaobaoPage'
+import { useAiSessionStore } from './store/aiSessionStore'
 import { useGameStore } from './store/gameStore'
 import type { AppTab, GirlState } from './store/gameTypes'
-import { uiStrings, t } from './data'
+import { appConfigs, jobConfigs, uiStrings, t } from './data'
 
 function StatsView({ girls }: { girls: Record<string, GirlState> }) {
   const player = useGameStore((state) => state.player)
@@ -101,7 +106,27 @@ function StatsView({ girls }: { girls: Record<string, GirlState> }) {
   )
 }
 
+const getPrimaryApp = (appId: AppTab) => appConfigs.find((app) => app.appId === appId)
+
+const getCurrentJobApp = (jobType?: string): AppTab | null => {
+  switch (jobType) {
+    case 'delivery':
+      return 'meituan'
+    case 'coding':
+      return 'coding'
+    case 'slot-machine':
+      return 'slots'
+    case 'streaming':
+      return 'streaming'
+    case 'taobao-review':
+      return 'taobao'
+    default:
+      return null
+  }
+}
+
 function App() {
+  const aiConfig = useAiConfig()
   const girls = useGameStore((state) => state.girls)
   const player = useGameStore((state) => state.player)
   const score = useGameStore((state) => state.score)
@@ -110,18 +135,36 @@ function App() {
   const finishWork = useGameStore((state) => state.finishWork)
   const markGirlRead = useGameStore((state) => state.markGirlRead)
   const resetGame = useGameStore((state) => state.resetGame)
-  const [activeTab, setActiveTab] = useState<AppTab>('chat')
+  const clearAiSession = useAiSessionStore((state) => state.clearSession)
+  const [activeView, setActiveView] = useState<AppTab>('desktop')
   const [selectedGirlId, setSelectedGirlId] = useState<string | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
   const [settlementMessage, setSettlementMessage] = useState<string | null>(null)
+  const [aiModalOpen, setAiModalOpen] = useState(false)
 
   const sa = uiStrings.app
+  const sc = uiStrings.aiSession
   const sb = uiStrings.sidebar
 
   const activeGirlsCount = useMemo(
     () => Object.values(girls).filter((girl) => girl.status !== 'blocked').length,
     [girls],
   )
+  const unreadCount = useMemo(
+    () => Object.values(girls).reduce((sum, girl) => sum + girl.unreadCount, 0),
+    [girls],
+  )
+  const currentJobApp = getCurrentJobApp(player.currentJob?.type)
+  const desktopApps = useMemo(() => appConfigs.filter((app) => app.placement === 'grid'), [])
+  const dockApps = useMemo(() => appConfigs.filter((app) => app.placement === 'dock'), [])
+  const deliveryJob = useMemo(() => jobConfigs.find((job) => job.id === 'delivery'), [])
+  const codingJob = useMemo(() => jobConfigs.find((job) => job.id === 'coding'), [])
+  const slotJob = useMemo(() => jobConfigs.find((job) => job.id === 'slot-machine'), [])
+  const streamingJob = useMemo(() => jobConfigs.find((job) => job.id === 'streaming'), [])
+  const meituanApp = useMemo(() => getPrimaryApp('meituan'), [])
+  const codingApp = useMemo(() => getPrimaryApp('coding'), [])
+  const slotApp = useMemo(() => getPrimaryApp('slots'), [])
+  const streamingApp = useMemo(() => getPrimaryApp('streaming'), [])
 
   useEffect(() => {
     if (!selectedGirlId || !chatOpen) return
@@ -154,7 +197,18 @@ function App() {
   }, [settlementMessage])
 
   const renderCurrentView = () => {
-    if (activeTab === 'chat') {
+    if (activeView === 'desktop') {
+      return (
+        <DesktopPage
+          apps={desktopApps}
+          unreadCount={unreadCount}
+          currentJobApp={currentJobApp}
+          onOpenApp={setActiveView}
+        />
+      )
+    }
+
+    if (activeView === 'wechat') {
       if (chatOpen && selectedGirlId && girls[selectedGirlId]) {
         return (
           <ChatRoom
@@ -178,10 +232,61 @@ function App() {
       )
     }
 
-    if (activeTab === 'work') return <EarningPage />
-    if (activeTab === 'shop') return <ShopPage />
+    if (activeView === 'taobao') return <TaobaoPage />
+    if (activeView === 'meituan') {
+      return (
+        <EarningPage
+          jobIds={['delivery']}
+          pageLabel={meituanApp?.name ?? '美团'}
+          pageTitle={deliveryJob?.name ?? '送外卖'}
+          pageSubtitle={deliveryJob?.description}
+        />
+      )
+    }
+    if (activeView === 'coding') {
+      return (
+        <EarningPage
+          jobIds={['coding']}
+          pageLabel={codingApp?.name ?? '代码'}
+          pageTitle={codingJob?.name ?? '写代码'}
+          pageSubtitle={codingJob?.description}
+        />
+      )
+    }
+    if (activeView === 'streaming') {
+      return (
+        <EarningPage
+          jobIds={['streaming']}
+          pageLabel={streamingApp?.name ?? '直播'}
+          pageTitle={streamingJob?.name ?? '当主播'}
+          pageSubtitle={streamingJob?.description}
+        />
+      )
+    }
+    if (activeView === 'slots') {
+      return (
+        <EarningPage
+          jobIds={['slot-machine']}
+          pageLabel={slotApp?.name ?? '头奖机'}
+          pageTitle={slotJob?.name ?? '摇老虎机'}
+          pageSubtitle={slotJob?.description}
+        />
+      )
+    }
     return <StatsView girls={girls} />
   }
+
+  const footer =
+    activeView === 'desktop' ? (
+      <AppDock
+        apps={dockApps}
+        unreadCount={unreadCount}
+        currentJobApp={currentJobApp}
+        onOpenApp={setActiveView}
+      />
+    ) : (
+      <HomeBar onGoHome={() => setActiveView('desktop')} />
+    )
 
   return (
     <div className="min-h-screen bg-haze px-4 py-6 text-ink sm:px-6 lg:px-8">
@@ -216,7 +321,28 @@ function App() {
             <div className="mt-4 rounded-3xl bg-cream px-4 py-4 text-sm">
               <div className="text-wine/45">{sb.aiMode}</div>
               <div className="mt-1 font-semibold text-ink">
-                {isSiliconflowEnabled ? `SiliconFlow · ${siliconflowConfig.model}` : sb.aiFallback}
+                {aiConfig.apiKey ? `${aiConfig.providerLabel} · ${aiConfig.model}` : sc.fallbackMode}
+              </div>
+              <div className="mt-2 text-xs text-wine/55">
+                {aiConfig.apiKey ? sc.sessionMode : sc.inactiveBadge}
+              </div>
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAiModalOpen(true)}
+                  className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-wine shadow-soft"
+                >
+                  {aiConfig.apiKey ? sc.editButton : sc.openButton}
+                </button>
+                {aiConfig.apiKey ? (
+                  <button
+                    type="button"
+                    onClick={clearAiSession}
+                    className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600"
+                  >
+                    {sc.clearButton}
+                  </button>
+                ) : null}
               </div>
             </div>
 
@@ -242,7 +368,7 @@ function App() {
               type="button"
               onClick={() => {
                 resetGame()
-                setActiveTab('chat')
+                setActiveView('desktop')
                 setSelectedGirlId(null)
                 setChatOpen(false)
                 setSettlementMessage(null)
@@ -269,13 +395,7 @@ function App() {
 
         <section className="w-full flex-1">
           <PhoneFrame
-            activeTab={activeTab}
-            onTabChange={(tab) => {
-              setActiveTab(tab)
-              if (tab !== 'chat') {
-                setChatOpen(false)
-              }
-            }}
+            footer={footer}
             money={player.money}
             timeStatus={player.timeStatus}
           >
@@ -283,6 +403,7 @@ function App() {
           </PhoneFrame>
         </section>
       </div>
+      <AiSessionModal open={aiModalOpen} onClose={() => setAiModalOpen(false)} />
     </div>
   )
 }

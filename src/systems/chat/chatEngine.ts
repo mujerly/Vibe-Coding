@@ -1,7 +1,7 @@
-import { siliconflowConfig, isSiliconflowEnabled } from '../../config/api'
+import { getAiConfig, isAiEnabled } from '../../config/api'
+import { girlConfigs } from '../../data'
 import type { GirlState, Message } from '../../store/gameTypes'
 import { getRelationshipStage } from '../girls/affectionLogic'
-import { girlConfigs } from '../../data'
 import { getSystemPrompt } from '../girls/promptBuilder'
 
 interface ChatRequestContext {
@@ -20,12 +20,18 @@ export interface ChatReplyPayload {
   debugReason?: string
 }
 
-interface SiliconflowResponse {
+interface ChatApiResponse {
   choices?: Array<{
     message?: {
       content?: string
     }
   }>
+}
+
+interface ChatApiErrorResponse {
+  error?: {
+    message?: string
+  }
 }
 
 interface ParsedStructuredReply {
@@ -106,12 +112,28 @@ const buildOpenAiHistory = (recentHistory: Message[]) =>
     content: message.content,
   }))
 
+const readApiErrorDetail = async (response: Response) => {
+  const rawText = await response.text()
+  if (!rawText.trim()) {
+    return ''
+  }
+
+  try {
+    const parsed = JSON.parse(rawText) as ChatApiErrorResponse
+    return parsed.error?.message?.trim() || rawText.trim()
+  } catch {
+    return rawText.trim()
+  }
+}
+
 const detectSignals = (playerMessage: string) => {
   return {
     isOily: /(宝贝|亲爱的|老婆|宝宝|baby)/i.test(playerMessage),
     isSweet: /(想你|喜欢|可爱|陪你|晚安|想见|抱抱|在乎|第一时间)/i.test(playerMessage),
-    isPractical: /(安排|礼物|请你|吃饭|下班|计划|餐厅|接你|周末|口红|包)/i.test(playerMessage),
-    isDeep: /(书|电影|展览|画|音乐|哲学|创作|灵感|故事|颜色|诗)/i.test(playerMessage),
+    isPractical: /(安排|礼物|请你|吃饭|下班|计划|餐厅|接你|周末|口红|包)/i.test(
+      playerMessage,
+    ),
+    isDeep: /(电影|展览|音乐|哲学|创作|灵感|故事|颜色|诗)/i.test(playerMessage),
     isLong: playerMessage.length >= 18,
   }
 }
@@ -180,15 +202,16 @@ const buildLocalFallbackReply = (
   }
 }
 
-const requestSiliconflowReply = async (context: ChatRequestContext) => {
-  const response = await fetch(`${siliconflowConfig.baseUrl}/chat/completions`, {
+const requestAiReply = async (context: ChatRequestContext) => {
+  const aiConfig = getAiConfig()
+  const response = await fetch(`${aiConfig.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${siliconflowConfig.apiKey}`,
+      Authorization: `Bearer ${aiConfig.apiKey}`,
     },
     body: JSON.stringify({
-      model: siliconflowConfig.model,
+      model: aiConfig.model,
       temperature: 0.8,
       max_tokens: 400,
       messages: [
@@ -210,10 +233,12 @@ const requestSiliconflowReply = async (context: ChatRequestContext) => {
   })
 
   if (!response.ok) {
-    throw new Error(`SiliconFlow 请求失败：${response.status}`)
+    const detail = await readApiErrorDetail(response)
+    const suffix = detail ? `：${detail}` : ''
+    throw new Error(`${aiConfig.providerLabel} 请求失败（${response.status}）${suffix}`)
   }
 
-  const data = (await response.json()) as SiliconflowResponse
+  const data = (await response.json()) as ChatApiResponse
   const rawContent = data.choices?.[0]?.message?.content ?? ''
   const parsed = parseStructuredReply(rawContent)
   const salvaged = parsed ?? salvageStructuredReply(rawContent)
@@ -231,12 +256,12 @@ const requestSiliconflowReply = async (context: ChatRequestContext) => {
 export const generateChatReply = async (
   context: ChatRequestContext,
 ): Promise<ChatReplyPayload> => {
-  if (!isSiliconflowEnabled) {
-    return buildLocalFallbackReply(context, '未读取到 API Key')
+  if (!isAiEnabled()) {
+    return buildLocalFallbackReply(context, '未输入本次会话 OpenAI Key')
   }
 
   try {
-    return await requestSiliconflowReply(context)
+    return await requestAiReply(context)
   } catch (error) {
     const debugReason = error instanceof Error ? error.message : '未知错误'
     return buildLocalFallbackReply(context, debugReason)

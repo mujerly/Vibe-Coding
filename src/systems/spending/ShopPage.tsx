@@ -3,7 +3,17 @@ import { useGameStore } from '../../store/gameStore'
 import { giftAdvice } from './shopData'
 import { uiStrings } from '../../data'
 
-export function ShopPage() {
+interface ShopPageProps {
+  pageLabel?: string
+  pageTitle?: string
+  pageSubtitle?: string
+}
+
+export function ShopPage({
+  pageLabel,
+  pageTitle,
+  pageSubtitle,
+}: ShopPageProps = {}) {
   const shopItems = useGameStore((state) => state.economy.shopItems)
   const inventory = useGameStore((state) => state.player.inventory)
   const money = useGameStore((state) => state.player.money)
@@ -11,6 +21,9 @@ export function ShopPage() {
   const [feedback, setFeedback] = useState<string | null>(null)
 
   const s = uiStrings.shop
+  const topLabel = pageLabel ?? s.topLabel
+  const title = pageTitle ?? s.title
+  const subtitle = pageSubtitle ?? s.subtitle
 
   useEffect(() => {
     if (!feedback) return undefined
@@ -26,11 +39,11 @@ export function ShopPage() {
   return (
     <div className="scrollbar-hidden flex h-full flex-col overflow-y-auto px-4 pb-4 pt-5">
       <div className="rounded-[30px] bg-[linear-gradient(135deg,#fff6ef,#ffd6cf)] px-5 py-5 shadow-soft">
-        <p className="text-xs uppercase tracking-[0.28em] text-wine/45">{s.topLabel}</p>
+        <p className="text-xs uppercase tracking-[0.28em] text-wine/45">{topLabel}</p>
         <div className="mt-2 flex items-end justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl text-ink">{s.title}</h1>
-            <p className="mt-2 text-sm leading-6 text-wine/65">{s.subtitle}</p>
+            <h1 className="font-display text-2xl text-ink">{title}</h1>
+            <p className="mt-2 text-sm leading-6 text-wine/65">{subtitle}</p>
           </div>
           <div className="rounded-2xl bg-white/80 px-3 py-2 text-right">
             <div className="text-[10px] uppercase tracking-[0.24em] text-wine/35">{s.balance}</div>

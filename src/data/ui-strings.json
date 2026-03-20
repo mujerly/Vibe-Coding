@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "《渣男模拟器》",
+    "title": "时间管理大师",
     "subtitle": "一个在手机壳里完成聊天、打工、送礼和多线关系经营的 AI 驱动 demo。",
     "resetButton": "重开 Demo",
     "gameOver": "游戏结束",
@@ -41,6 +41,35 @@
     "work": "打工",
     "shop": "商店",
     "stats": "战绩"
+  },
+  "desktop": {
+    "homeButton": "桌面",
+    "workingElsewhere": "你正在处理 {name}，先回对应软件完成这单。"
+  },
+  "aiSession": {
+    "title": "OpenAI 会话 Key",
+    "subtitle": "只保存在当前页面内存里，刷新或关闭页面后会自动清除。",
+    "keyLabel": "API Key",
+    "keyPlaceholder": "输入 sk- 开头的 OpenAI Key",
+    "modelLabel": "模型",
+    "modelPlaceholder": "留空则使用默认模型",
+    "modelHelper": "可以直接从建议里选模型，也可以继续手动输入。",
+    "modelCustomOption": "自定义输入",
+    "modelDetectButton": "读取可用模型",
+    "modelDetectLoading": "正在读取...",
+    "modelDetectSuccess": "已读取 {count} 个可用模型",
+    "modelDetectFailed": "模型读取失败：{reason}",
+    "modelDetectUnknownError": "未知错误",
+    "hint": "这是本地演示模式，不会写入 localStorage、sessionStorage 或 .env 文件。",
+    "openButton": "输入 Key",
+    "editButton": "更换 Key",
+    "clearButton": "清除 Key",
+    "saveButton": "启用会话",
+    "cancelButton": "取消",
+    "activeBadge": "本次会话中",
+    "inactiveBadge": "未启用",
+    "sessionMode": "会话 OpenAI",
+    "fallbackMode": "本地保底"
   },
   "statusBar": {
     "aiCloud": "AI 云端",
@@ -99,6 +128,23 @@
     "jobStarted": "{name} 开始了，期间不能聊天。",
     "jobFailed": "开工失败",
     "manualSettled": "{name} 完成，到账 ¥{reward}",
+    "slotTitle": "头奖老虎机",
+    "slotSubtitle": "每次拉一次先扣 ¥{cost}，只有三个完全相同的图标才会开奖，图标越稀有奖金越高。",
+    "slotSpinCost": "本次成本 ¥{cost}",
+    "slotJackpot": "头奖 ¥{reward}",
+    "slotRules": "三连同图标才算中奖，没凑成三连就直接亏掉本次投入。",
+    "slotOddsTitle": "赔率表",
+    "slotChance": "单格出现",
+    "slotPayout": "奖金",
+    "slotNet": "净赚",
+    "slotResult": "本轮结果",
+    "slotSpinButton": "花 ¥{cost} 拉一次",
+    "slotSpinning": "摇号中...",
+    "slotNeedMoney": "至少要有 ¥{cost} 才能拉一次。",
+    "slotPayoutRange": "三连 ¥{min}-{max}",
+    "slotLoseFeedback": "没凑成三连，直接亏掉 ¥{cost}。",
+    "slotWinFeedback": "三连 {name}，到账 ¥{reward}，净赚 ¥{net}。",
+    "slotJackpotFeedback": "三连 {name}，直接爆出 ¥{reward} 大奖，净赚 ¥{net}！",
     "deliverySubtitle": "使用十字键或键盘方向键控制骑手，在随机地图里完成取餐和送达。",
     "deliveryControls": "十字键 / 键盘方向键",
     "deliveryProgress": "订单进度 {current}/{total}",
@@ -135,6 +181,14 @@
     "purchaseFailed": "购买失败",
     "buyButton": "购买",
     "insufficientFunds": "余额不足"
+  },
+  "taobao": {
+    "shopTab": "购物",
+    "reviewTab": "刷单",
+    "shopTitle": "淘宝购物",
+    "shopSubtitle": "购物和刷单分开走，先给她挑礼物，再决定要不要接刷单。",
+    "reviewTitle": "淘宝刷单",
+    "reviewSubtitle": "刷单和购物是两条线，切到这里才能开始接单。"
   },
   "errors": {
     "girlNotFound": "聊天对象不存在。",

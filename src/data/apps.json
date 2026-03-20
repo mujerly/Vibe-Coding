@@ -1,0 +1,92 @@
+[
+  {
+    "id": "wechat-grid",
+    "appId": "wechat",
+    "name": "微信",
+    "icon": "💬",
+    "iconBackground": "#8ED86C",
+    "iconColor": "#FFFFFF",
+    "placement": "grid"
+  },
+  {
+    "id": "meituan-grid",
+    "appId": "meituan",
+    "name": "美团",
+    "icon": "🛵",
+    "iconBackground": "#FFD54D",
+    "iconColor": "#4A3200",
+    "placement": "grid"
+  },
+  {
+    "id": "taobao-grid",
+    "appId": "taobao",
+    "name": "淘宝",
+    "icon": "淘",
+    "iconBackground": "#FF8A45",
+    "iconColor": "#FFFFFF",
+    "placement": "grid"
+  },
+  {
+    "id": "coding-grid",
+    "appId": "coding",
+    "name": "代码",
+    "icon": "💻",
+    "iconBackground": "#2F80ED",
+    "iconColor": "#FFFFFF",
+    "placement": "grid"
+  },
+  {
+    "id": "streaming-grid",
+    "appId": "streaming",
+    "name": "直播",
+    "icon": "🎤",
+    "iconBackground": "#1E1E1E",
+    "iconColor": "#FFFFFF",
+    "placement": "grid"
+  },
+  {
+    "id": "slots-grid",
+    "appId": "slots",
+    "name": "头奖机",
+    "icon": "🎰",
+    "iconBackground": "#B83B5E",
+    "iconColor": "#FFF6D6",
+    "placement": "grid"
+  },
+  {
+    "id": "wechat-dock",
+    "appId": "wechat",
+    "name": "微信",
+    "icon": "💬",
+    "iconBackground": "#8ED86C",
+    "iconColor": "#FFFFFF",
+    "placement": "dock"
+  },
+  {
+    "id": "taobao-dock",
+    "appId": "taobao",
+    "name": "淘宝",
+    "icon": "淘",
+    "iconBackground": "#FF8A45",
+    "iconColor": "#FFFFFF",
+    "placement": "dock"
+  },
+  {
+    "id": "meituan-dock",
+    "appId": "meituan",
+    "name": "美团",
+    "icon": "🛵",
+    "iconBackground": "#FFD54D",
+    "iconColor": "#4A3200",
+    "placement": "dock"
+  },
+  {
+    "id": "stats-dock",
+    "appId": "stats",
+    "name": "战绩",
+    "icon": "📊",
+    "iconBackground": "#EDF1FF",
+    "iconColor": "#5D52C7",
+    "placement": "dock"
+  }
+]

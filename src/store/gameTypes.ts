@@ -44,7 +44,8 @@ export interface JobDefinition {
   reward: number
   description: string
   rewardRange?: [number, number]
-  mode?: 'timed' | 'delivery' | 'review'
+  cost?: number
+  mode?: 'timed' | 'delivery' | 'review' | 'slot'
   completionMode?: 'timer' | 'manual'
 }
 
@@ -53,8 +54,14 @@ export interface CurrentJob {
   duration: number
   reward: number
   startTime: number
-  mode: 'timed' | 'delivery' | 'review'
+  mode: 'timed' | 'delivery' | 'review' | 'slot'
   completionMode: 'timer' | 'manual'
+}
+
+export interface WorkSettlement {
+  reward: number
+  cost: number
+  net: number
 }
 
 export interface GameState {
@@ -81,4 +88,12 @@ export interface ActionResult {
   error?: string
 }
 
-export type AppTab = 'chat' | 'work' | 'shop' | 'stats'
+export type AppTab =
+  | 'desktop'
+  | 'wechat'
+  | 'taobao'
+  | 'meituan'
+  | 'coding'
+  | 'slots'
+  | 'streaming'
+  | 'stats'
